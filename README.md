@@ -12,5 +12,7 @@ Because you want to "breakout" from the simple configuration files and use Jenki
 ### Usage
 
 ```shell
+docker run fareoffice/infra-breakout help
+docker run -v ${PWD}:/output fareoffice/infra-breakout build /output
 docker run -v ${PWD}:/output fareoffice/infra-breakout k8s /output
 ```
