@@ -1,0 +1,11 @@
+{
+  "id": "/K8S",
+  "type": "object",
+  "properties": {
+    "version": { "type": "string" },
+    "name": { "type": "string" },
+    "namespace": { "type": "string" },
+    "image": { "type": "string" }
+  },
+  "required": ["version", "image"]
+}

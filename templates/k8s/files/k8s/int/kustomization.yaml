@@ -1,0 +1,13 @@
+# Kustomize is a kubernetes tool for managing yaml manifests.
+# 
+# int deployment config goes in this folder.
+# 
+# see https://github.com/kubernetes-sigs/kustomize for more info.
+bases:
+- ../base
+resources:
+- network.yaml
+configMapGenerator:
+- files:
+  - defaults.env
+  name: defaults

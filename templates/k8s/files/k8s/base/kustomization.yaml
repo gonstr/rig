@@ -1,0 +1,11 @@
+# Kustomize is a kubernetes tool for managing yaml manifests.
+# 
+# This folder serves as a base for int and prod and is referenced in
+# in the kustomization.yaml files in respective folders.
+# 
+# see https://github.com/kubernetes-sigs/kustomize for more info.
+namespace: {{namespace}}
+commonLabels:
+  app: {{name}}
+resources:
+- deployment.yaml

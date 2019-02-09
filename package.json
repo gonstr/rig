@@ -1,0 +1,13 @@
+{
+  "name": "infra-breakout",
+  "version": "1.0.0",
+  "main": "lib/index.js",
+  "bin": "bin/breakout",
+  "repository": "git@github.com:fareoffice/infra-breakout.git",
+  "dependencies": {
+    "handlebars": "^4.1.0",
+    "js-yaml": "^3.12.1",
+    "jsonschema": "^1.2.4",
+    "meow": "^5.0.0"
+  }
+}

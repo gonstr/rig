@@ -1,0 +1,19 @@
+{
+  "id": "/Build",
+  "type": "object",
+  "properties": {
+    "version": { "type": "string" },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "container": { "type": "string" },
+          "command": { "type": "string" }
+        },
+        "required": ["image", "command"]
+      }
+    }
+  },
+  "required": ["version", "steps"]
+}
