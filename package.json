@@ -5,6 +5,8 @@
   "bin": "bin/breakout",
   "repository": "git@github.com:fareoffice/infra-breakout.git",
   "dependencies": {
+    "fs-extra": "^7.0.1",
+    "glob": "^7.1.3",
     "handlebars": "^4.1.0",
     "js-yaml": "^3.12.1",
     "jsonschema": "^1.2.4",
