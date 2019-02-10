@@ -25,21 +25,17 @@ Examples
     $ infra-cli breakout -k k8s.yaml .
 ```
 
-#### Install and use with npm/yarn
+#### Install and use with npm
 
 ```shell
 $ npm install -g git+ssh://git@github.com/fareoffice/infra-cli.git
+$ infra-cli
 ```
 
-or
+#### Install and use with yarn
 
 ```shell
 $ yarn global add git+ssh://git@github.com/fareoffice/infra-cli.git
-```
-
-then:
-
-```shell
 $ infra-cli
 ```
 
