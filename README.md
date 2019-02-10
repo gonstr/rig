@@ -19,6 +19,6 @@ bin/cli breakout k8s.yaml ./deploy
 or:
 
 docker run -v ${PWD}:/cwd fareoffice/infra-cli init
-docker run -v ${PWD}:/cwd fareoffice/infra-cli breakout build.yaml
-docker run -v ${PWD}:/cwd fareoffice/infra-cli breakout k8s.yaml ./cwd/deploy
+docker run -v ${PWD}:/cwd fareoffice/infra-cli breakout /cwd/build.yaml
+docker run -v ${PWD}:/cwd fareoffice/infra-cli breakout /cwd/k8s.yaml /cwd/deploy
 ```
