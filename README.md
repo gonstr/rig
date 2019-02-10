@@ -12,9 +12,9 @@ Commands
         Creates build.yaml and k8s.yaml files in the current working dir.
 
     breakout
-        Converts the build.yaml or k8s.yaml to Jenkinsfile and Kubernetes manifest
-        files respectivly. Providing the '--keep-input', or '-k' flag ensures the
-        input file is not deleted.
+        Converts build.yaml or k8s.yaml to Jenkinsfile or Kubernetes manifest
+        files respectivly. Providing the '--keep-input', or '-k' flag ensures
+        the input file is not deleted.
 
 Examples
     $ infra-cli init
