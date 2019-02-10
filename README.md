@@ -12,7 +12,13 @@ Because you want to "breakout" from the simple configuration files and use Jenki
 ### Usage
 
 ```shell
-docker run fareoffice/infra-breakout help
-docker run -v ${PWD}:/output fareoffice/infra-breakout build /output
-docker run -v ${PWD}:/output fareoffice/infra-breakout k8s /output
+bin/cli init
+bin/cli breakout build.yaml
+bin/cli breakout k8s.yaml ./deploy
+
+or:
+
+docker run -v ${PWD}:/cwd fareoffice/infra-cli init
+docker run -v ${PWD}:/cwd fareoffice/infra-cli breakout build.yaml
+docker run -v ${PWD}:/cwd fareoffice/infra-cli breakout k8s.yaml ./cwd/deploy
 ```

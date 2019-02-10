@@ -1,5 +1,5 @@
-# docker build -t fareoffice/infra-breakout:latest .
-# docker push fareoffice/infra-breakout:latest
+# docker build -t fareoffice/infra-cli:latest .
+# docker push fareoffice/infra-cli:latest
 FROM node:10.15.0-alpine
 
 RUN mkdir -p /opt
@@ -12,4 +12,4 @@ COPY ./yarn.lock .
 COPY . /opt/app
 RUN yarn --production
 
-ENTRYPOINT ["bin/breakout"]
+ENTRYPOINT ["bin/cli"]
