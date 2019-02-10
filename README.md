@@ -13,7 +13,7 @@ Commands
         Creates build.yaml and k8s.yaml files in the current working dir.
 
     validate
-        Validates a build.ysml or k8s.yaml file
+        Validates a build.yaml or k8s.yaml file
 
     breakout
         Converts build.yaml or k8s.yaml to Jenkinsfile or Kubernetes manifest
