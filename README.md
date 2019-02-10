@@ -1,23 +1,29 @@
-## infra-breakout
+## infra-cli
 
-Converts infra config files to their more complex companion files, namely:
-
-- build.yaml to Jenkinsfile
-- k8s.yaml to Kubernetes manifests
-
-### Why?
-
-Because you want to "breakout" from the simple configuration files and use Jenkinsfile or Kubernetes manifests directly.
-
-### Usage
+Command line tool for generating and managing infra configuration files.
 
 ```shell
-bin/cli init
-bin/cli breakout build.yaml
-bin/cli breakout k8s.yaml ./deploy
+Usage
+    $ infra-cli init
+    $ infra-cli breakout [-k keep-input] [FILE] [OUTPUTPATH]
 
-or:
+Commands
+    init
+        Creates build.yaml and k8s.yaml files in the current working dir.
 
+    breakout
+        Converts the build.yaml or k8s.yaml to Jenkinsfile and Kubernetes manifest
+        files respectivly. Providing the '--keep-input', or '-k' flag ensures the
+        input file is not deleted.
+
+Examples
+    $ infra-cli init
+    $ infra-cli breakout -k k8s.yaml .
+```
+
+#### Inside Docker
+
+```shell
 docker run -v ${PWD}:/cwd fareoffice/infra-cli init
 docker run -v ${PWD}:/cwd fareoffice/infra-cli breakout /cwd/build.yaml
 docker run -v ${PWD}:/cwd fareoffice/infra-cli breakout /cwd/k8s.yaml /cwd/deploy
