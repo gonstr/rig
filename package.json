@@ -10,6 +10,7 @@
     "handlebars": "^4.1.0",
     "js-yaml": "^3.12.1",
     "jsonschema": "^1.2.4",
-    "meow": "^5.0.0"
+    "meow": "^5.0.0",
+    "readline-sync": "^1.4.9"
   }
 }
