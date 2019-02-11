@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: {{name}}
 spec:
-  replicas: 1
+  replicas: {{replicas}}
   selector:
     matchLabels:
       app: {{name}}
@@ -17,27 +17,27 @@ spec:
       - name: {{name}}
         resources:
           requests:
-            cpu: 300
-            memory: 300
+            cpu: {{cpuMin}}
+            memory: {{memoryMin}}
           limits:
-            cpu: 300
-            memory: 300
-        image: image
+            cpu: {{cpuMax}}
+            memory: {{memoryMax}}
+        image: {{image}}
         imagePullPolicy: Always
         envFrom:
         - configMapRef:
             name: defaults
             optional: true
         ports:
-        - containerPort: 80
+        - containerPort: {{port}}
         livenessProbe:
           tcpSocket:
-            port: 80
+            port: {{port}}
           initialDelaySeconds: 20
           timeoutSeconds: 3
         readinessProbe:
           httpGet:
             port: 80
-            path: /health
+            path: {{readinessPath}}
           initialDelaySeconds: 20
           timeoutSeconds: 3

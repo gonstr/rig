@@ -2,10 +2,32 @@
   "id": "/K8S",
   "type": "object",
   "properties": {
-    "version": { "type": "string" },
+    "version": { "type": "number" },
     "name": { "type": "string" },
     "namespace": { "type": "string" },
-    "image": { "type": "string" }
+    "replicas": { "type": "number" },
+    "container": {
+      "type": "object",
+      "properties": {
+        "image": { "type": "string" },
+        "port": { "type": "number" },
+        "readinessPath": { "type": "string" },
+        "envSecretRefs": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "cpuMin": { "type": "string" },
+            "cpuMax": { "type": "string" },
+            "memory": { "type": "string" }
+          },
+          "required": ["cpuMin", "cpuMax", "memory"]
+        }
+      },
+      "required": ["image", "port", "readinessPath", "resources"]
+    }
   },
-  "required": ["version", "image"]
+  "required": ["version", "name", "namespace", "replicas", "container"]
 }
