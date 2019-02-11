@@ -5,9 +5,9 @@ Command line tool for generating and managing infra configuration files.
 ```shell
 Usage
   $ infra-cli init
-  $ infra-cli validate [FILE]
-  $ infra-cli gen-k8s [FILE] [CLUSTER] [IMAGETAG]
-  $ infra-cli breakout [FILE] [OUTPUTPATH]
+  $ infra-cli validate [file]
+  $ infra-cli gen-k8s [file] [cluster] [image tag]
+  $ infra-cli breakout [file] [output path] <template type>
 
 Commands
   init
@@ -22,7 +22,16 @@ Commands
 
   breakout
     Converts build.yaml or k8s.yaml to Jenkinsfile or Kubernetes manifest
-    files respectivly and writes them to the specified output path.
+    files respectivly and writes them to the specified output path. Output
+    template can be specified as an optional third argument. Valid templates
+    are:
+
+    k8s.yaml:
+      Kustomize (default) - converts k8s.yaml to kustomize yaml files.
+      Go-template - converts k8s.yaml to go-template yaml files.
+
+    build.yaml
+      Jenkinsfile - converts build.yaml to Jenkinsfile.
 
 Examples
   $ infra-cli init

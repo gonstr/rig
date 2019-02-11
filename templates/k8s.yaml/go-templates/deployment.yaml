@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{name}}
+spec:
+  replicas: {{replicas}}
+  selector:
+    matchLabels:
+      app: {{name}}
+  strategy:
+    type: RollingUpdate
+  template:
+    spec:
+      containers:
+      - name: {{name}}
+        resources:
+          requests:
+            cpu: {{container.resources.cpuMin}}
+            memory: {{container.resources.memory}}
+          limits:
+            cpu: {{container.resources.cpuMax}}
+            memory: {{container.resources.memory}}
+        image: {{container.image}}:\{{ .Env.VERSION }}
+        imagePullPolicy: Always
+        envFrom:
+        - configMapRef:
+            name: defaults
+            optional: true
+        ports:
+        - containerPort: {{container.port}}
+        livenessProbe:
+          tcpSocket:
+            port: {{container.port}}
+          initialDelaySeconds: 20
+          timeoutSeconds: 3
+        readinessProbe:
+          httpGet:
+            port: 80
+            path: {{container.readinessPath}}
+          initialDelaySeconds: 20
+          timeoutSeconds: 3

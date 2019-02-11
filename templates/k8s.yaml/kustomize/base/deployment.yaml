@@ -8,36 +8,34 @@ spec:
     matchLabels:
       app: {{name}}
   strategy:
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
+    type: RollingUpdate
   template:
     spec:
       containers:
       - name: {{name}}
         resources:
           requests:
-            cpu: {{cpuMin}}
-            memory: {{memoryMin}}
+            cpu: {{container.resources.cpuMin}}
+            memory: {{container.resources.memory}}
           limits:
-            cpu: {{cpuMax}}
-            memory: {{memoryMax}}
-        image: {{image}}
+            cpu: {{container.resources.cpuMax}}
+            memory: {{container.resources.memory}}
+        image: {{container.image}}
         imagePullPolicy: Always
         envFrom:
         - configMapRef:
             name: defaults
             optional: true
         ports:
-        - containerPort: {{port}}
+        - containerPort: {{container.port}}
         livenessProbe:
           tcpSocket:
-            port: {{port}}
+            port: {{container.port}}
           initialDelaySeconds: 20
           timeoutSeconds: 3
         readinessProbe:
           httpGet:
             port: 80
-            path: {{readinessPath}}
+            path: {{container.readinessPath}}
           initialDelaySeconds: 20
           timeoutSeconds: 3
