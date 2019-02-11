@@ -17,11 +17,12 @@ Commands
     Validates a build.yaml or k8s.yaml file.
 
   gen-k8s
-    Converts a k8s.yaml to Kubernetes manifests and prints them to stdout.
+    Generates kubernetes manifests from a k8s.ysml file and prints them to
+    stdout.
 
   breakout
     Converts build.yaml or k8s.yaml to Jenkinsfile or Kubernetes manifest
-    files respectivly and writes them to file system.
+    files respectivly and writes them to the specified output path.
 
 Examples
   $ infra-cli init
