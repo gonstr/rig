@@ -6,7 +6,7 @@ Command line tool for generating and managing infra configuration files.
 Usage
   $ infra-cli init
   $ infra-cli validate [FILE]
-  $ infra-cli build [FILE] [CLUSTER] [IMAGETAG]
+  $ infra-cli build-k8s [FILE] [CLUSTER] [IMAGETAG]
   $ infra-cli breakout [FILE] [OUTPUTPATH]
 
 Commands
@@ -16,7 +16,7 @@ Commands
   validate
     Validates a build.yaml or k8s.yaml file.
 
-  build
+  build-k8s
     Converts a k8s.yaml to Kubernetes manifests and prints them to stdout.
 
   breakout
@@ -25,7 +25,9 @@ Commands
 
 Examples
   $ infra-cli init
-  $ infra-cli breakout -k k8s.yaml .
+  $ infra-cli validate build.yaml
+  $ infra-cli build-k8s k8s.yaml int v1.2.3
+  $ infra-cli breakout k8s.yaml .
 ```
 
 #### Install and use with npm
