@@ -11,7 +11,7 @@ Usage
 
 Commands
   init
-    Creates build.yaml and k8s.yaml files in the current working dir.
+    Creates build.yaml and k8s.yaml files in the current working directory.
 
   validate
     Validates a build.yaml or k8s.yaml file.
@@ -28,7 +28,7 @@ Commands
 
     k8s.yaml:
       Kustomize (default) - converts k8s.yaml to kustomize yaml files.
-      Go-template - converts k8s.yaml to go-template yaml files.
+      GoTemplates - converts k8s.yaml to go-template yaml files.
 
     build.yaml
       Jenkinsfile - converts build.yaml to Jenkinsfile.
