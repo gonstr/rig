@@ -1,13 +1,13 @@
-## infra-cli
+## rig
 
 Command line tool for generating and managing infra configuration files.
 
 ```shell
 Usage
-  $ infra-cli init
-  $ infra-cli validate [file]
-  $ infra-cli gen-k8s [file] [cluster] [image tag]
-  $ infra-cli breakout [file] [output path] <template type>
+  $ rig init
+  $ rig validate [file]
+  $ rig gen-k8s [file] [cluster] [image tag]
+  $ rig breakout [file] [output path] <template type>
 
 Commands
   init
@@ -34,29 +34,28 @@ Commands
       Jenkinsfile - converts build.yaml to Jenkinsfile.
 
 Examples
-  $ infra-cli init
-  $ infra-cli validate build.yaml
-  $ infra-cli gen-k8s k8s.yaml int v1.2.3
-  $ infra-cli breakout k8s.yaml .
+  $ rig init
+  $ rig validate build.yaml
+  $ rig gen-k8s k8s.yaml int v1.2.3
+  $ rig breakout k8s.yaml .
 ```
 
 #### Install and use with npm
 
 ```shell
-$ npm install -g git+ssh://git@github.com/fareoffice/infra-cli.git
-$ infra-cli
+$ npm install -g git+ssh://git@github.com/fareoffice/rig.git
+$ rig
 ```
 
 #### Install and use with yarn
 
 ```shell
-$ yarn global add git+ssh://git@github.com/fareoffice/infra-cli.git
-$ infra-cli
+$ yarn global add git+ssh://git@github.com/fareoffice/rig.git
+$ rig
 ```
 
 #### Use with docker run
 
 ```shell
-$ docker run -v ${PWD}:/cwd fareoffice/infra-cli init
-$ docker run -v ${PWD}:/cwd fareoffice/infra-cli breakout /cwd/build.yaml
+$ docker run -v ${PWD}:/cwd fareoffice/rig init /cwd
 ```
