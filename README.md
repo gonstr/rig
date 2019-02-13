@@ -9,13 +9,7 @@ Usage
 Commands
   install
     Install a rig template from a github repo in the current
-    working directory. Valid template arguments are:
-
-    <owner>/<repo>/<template>[#<version>]
-
-    For example:
-
-    fareoffice/rig-templates/simple-app#1.0.0
+    working directory.
 
   build
     Builds the installed template and prints it to stdout.
