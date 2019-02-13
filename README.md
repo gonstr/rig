@@ -2,7 +2,7 @@
 
 Command line tool for generating and managing infra configuration files.
 
-```shell
+```
 Usage
   $ rig [command] <args>
 
