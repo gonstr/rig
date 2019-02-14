@@ -1,6 +1,6 @@
 ## rig
 
-Command line tool for generating and managing infra configuration files.
+Command line tool for downloading the building rig templates.
 
 ```
 Usage
@@ -8,16 +8,18 @@ Usage
 
 Commands
   install
-    Install a rig template from a github repo in the current
+    Install a rig template from a github repo to the current
     working directory.
 
   build
     Builds the installed template and prints it to stdout.
+    Template parameters are read from the rig.yaml file and
+    the -p argument.
 
     --parameters, -p
-      Template parameters in a comma separated key, value
+      Template parameters in a comma separated key=value
       list. Parameters passed this way overrides parameters
-      defined in the .rig file.
+      defined in the rig.yaml file.
 
     --output-dir, -o
       Writes template to a directory instead of stdout.
@@ -26,7 +28,7 @@ Examples
   $ rig install fareoffice/rig-templates/simple-app
   $ rig install fareoffice/rig-templates/simple-app#1.0.0
   $ rig build
-  $ rig build --parameters key=value,key=value --to-dir ./output
+  $ rig build -p key1=value,key2=value --output-dir ./output
 ```
 
 #### Install and use with npm
