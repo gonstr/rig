@@ -22,6 +22,8 @@ async function run(args) {
   }
 
   await fs.writeFile(path.join(process.cwd(), 'rig.yaml'), yaml.safeDump(rig))
+
+  console.log(`Done. Add static parameters to rig.yaml then build the template with 'rig build'.`)
 }
 
 module.exports = run

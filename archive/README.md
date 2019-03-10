@@ -1,6 +1,6 @@
 ## rig
 
-Command line tool for building and managing rig templates.
+Command line tool for downloading the building rig templates.
 
 ```
 Usage
@@ -31,8 +31,16 @@ Examples
   $ rig build -p key1=value,key2=value --output-dir ./output
 ```
 
-#### Install and use with go
+#### Install and use with npm
 
 ```shell
+$ npm install -g git+ssh://git@github.com/gonstr/rig.git
+$ rig
+```
 
+#### Install and use with yarn
+
+```shell
+$ yarn global add git+ssh://git@github.com/gonstr/rig.git
+$ rig
 ```
