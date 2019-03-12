@@ -1,6 +1,7 @@
 package fs
 
 import (
+	"io/ioutil"
 	"os"
 
 	"github.com/mitchellh/go-homedir"
@@ -22,4 +23,14 @@ func EnsureDir(path string) error {
 // HomeDir return the users home directory
 func HomeDir() (string, error) {
 	return homedir.Dir()
+}
+
+// TempDir return a temp dir
+func TempDir() (string, error) {
+	dir, err := ioutil.TempDir("", "rig")
+	if err != nil {
+		return "", err
+	}
+
+	return dir, nil
 }

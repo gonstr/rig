@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -28,12 +30,20 @@ current working directory.
 	Run: func(cmd *cobra.Command, args []string) {
 		tmpl, err := template.NewTemplate(args[0])
 		if err != nil {
-			panic(err)
+			fmt.Println(err)
+			os.Exit(1)
 		}
 
 		err = tmpl.Sync()
 		if err != nil {
-			panic(err)
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		err = tmpl.Install()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
 		}
 	},
 }

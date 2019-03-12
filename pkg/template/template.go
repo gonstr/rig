@@ -3,6 +3,7 @@ package template
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"path"
 	"strings"
 
@@ -17,7 +18,9 @@ type Template interface {
 	Owner() string
 	Repo() string
 	Template() string
+	Version() string
 	Sync() error
+	Install() error
 }
 
 type template struct {
@@ -26,6 +29,7 @@ type template struct {
 	owner    string
 	repo     string
 	template string
+	version  string
 	rigDir   string
 }
 
@@ -48,9 +52,14 @@ func NewTemplate(endpoint string) (Template, error) {
 		return nil, fmt.Errorf("Unable to parse url path: %s", endpoint)
 	}
 
+	version := u.Fragment
+	if version == "" {
+		version = "master"
+	}
+
 	split := strings.Split(u.Path, "/")
 
-	if len(split) != 2 {
+	if len(split) != 4 {
 		return nil, fmt.Errorf("Path does not point to a directy in the repository root: %s", u.Path)
 	}
 
@@ -61,7 +70,7 @@ func NewTemplate(endpoint string) (Template, error) {
 
 	rigDir := path.Join(homedir, ".rig")
 
-	return template{scheme: u.Scheme, host: u.Host, owner: split[0], template: split[1], rigDir: rigDir}, nil
+	return template{scheme: u.Scheme, host: u.Host, owner: split[1], repo: split[2], template: split[3], version: version, rigDir: rigDir}, nil
 }
 
 func (t template) Scheme() string {
@@ -82,6 +91,10 @@ func (t template) Repo() string {
 
 func (t template) Template() string {
 	return t.template
+}
+
+func (t template) Version() string {
+	return t.version
 }
 
 func (t template) ownerDir() string {
@@ -105,8 +118,34 @@ func (t template) Sync() error {
 		}
 	} else {
 		// Dir does not exists - we should clone
+		fs.EnsureDir(t.ownerDir())
 		git.Clone(t.ownerDir(), t.gitSCPURI())
 	}
+
+	return nil
+}
+
+func (t template) Install() error {
+	// Temp dir
+	dir, err := fs.TempDir()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	defer os.RemoveAll(dir)
+
+	ref := t.Version()
+	if ref != "master" {
+		ref = fmt.Sprintf("tags/%s#%s", t.template, t.Version())
+	}
+
+	err = git.Checkout(t.repoDir(), dir, ref, t.template)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(dir)
 
 	return nil
 }

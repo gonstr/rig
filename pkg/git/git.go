@@ -7,7 +7,7 @@ import (
 
 // Clone clones an uri in to dir
 func Clone(dir string, uri string) error {
-	cmd := exec.Command(fmt.Sprintf("git clone %s", uri))
+	cmd := exec.Command("git", "clone", uri)
 	cmd.Dir = dir
 	err := cmd.Run()
 	if err != nil {
@@ -47,5 +47,17 @@ func Clean(dir string) error {
 		return err
 	}
 
+	return nil
+}
+
+// Checkout does a git checkout of a local repo/folder to a target directory
+func Checkout(repoDir string, targetDir string, ref string, folder string) error {
+	// await shell(`git --work-tree=${name} checkout ${tag} -- ${template}`, dirs.repo)
+	cmd := exec.Command("git", fmt.Sprintf("--work-tree=%s", targetDir), "checkout", ref, "--", folder)
+	cmd.Dir = repoDir
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
 	return nil
 }
