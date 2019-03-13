@@ -45,5 +45,7 @@ current working directory.
 			fmt.Println(err)
 			os.Exit(1)
 		}
+
+		fmt.Println("Template installed. Edit rig.yaml to your liking and run 'rig gen' to generate manifests.")
 	},
 }

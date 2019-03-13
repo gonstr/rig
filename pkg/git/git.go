@@ -52,7 +52,6 @@ func Clean(dir string) error {
 
 // Checkout does a git checkout of a local repo/folder to a target directory
 func Checkout(repoDir string, targetDir string, ref string, folder string) error {
-	// await shell(`git --work-tree=${name} checkout ${tag} -- ${template}`, dirs.repo)
 	cmd := exec.Command("git", fmt.Sprintf("--work-tree=%s", targetDir), "checkout", ref, "--", folder)
 	cmd.Dir = repoDir
 	err := cmd.Run()

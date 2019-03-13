@@ -1,12 +1,16 @@
 package template
 
 import (
+	"bytes"
 	"fmt"
+	gotmpl "html/template"
+	"io/ioutil"
 	"net/url"
 	"os"
 	"path"
 	"strings"
 
+	"github.com/Masterminds/sprig"
 	"github.com/gonstr/rig/pkg/fs"
 	"github.com/gonstr/rig/pkg/git"
 )
@@ -109,6 +113,10 @@ func (t template) gitSCPURI() string {
 	return fmt.Sprintf("git@%s:%s/%s", t.host, t.owner, t.repo)
 }
 
+func (t template) templateURL() string {
+	return fmt.Sprintf("https://%s/%s/%s/%s", t.host, t.owner, t.repo, t.template)
+}
+
 func (t template) Sync() error {
 	if fs.DirExists(t.repoDir()) {
 		// Dir exists - we should clean
@@ -125,27 +133,71 @@ func (t template) Sync() error {
 	return nil
 }
 
+const rigTmpl = `template: {{ .Template }}
+version: {{ .Version }}
+
+values:
+{{ .Values | indent 2 | trim }}
+`
+
 func (t template) Install() error {
 	// Temp dir
-	dir, err := fs.TempDir()
+	tmpDir, err := fs.TempDir()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	defer os.RemoveAll(dir)
+	defer os.RemoveAll(tmpDir)
 
+	// Create version
 	ref := t.Version()
 	if ref != "master" {
 		ref = fmt.Sprintf("tags/%s#%s", t.template, t.Version())
 	}
 
-	err = git.Checkout(t.repoDir(), dir, ref, t.template)
+	// Copy to temp dir
+	err = git.Checkout(t.repoDir(), tmpDir, ref, t.template)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(dir)
+	wd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	// Read values.yaml to input stream
+	values, err := ioutil.ReadFile(path.Join(tmpDir, t.Template(), "values.yaml"))
+	if err != nil {
+		return err
+	}
+
+	tmpl, err := gotmpl.New("rig").Funcs(sprig.FuncMap()).Parse(rigTmpl)
+	if err != nil {
+		return err
+	}
+
+	tmplData := struct {
+		Template string
+		Version  string
+		Values   string
+	}{
+		Template: t.templateURL(),
+		Version:  t.Version(),
+		Values:   string(values),
+	}
+
+	var buffer bytes.Buffer
+	err = tmpl.Execute(&buffer, tmplData)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(path.Join(wd, "rig.yaml"), buffer.Bytes(), 0644)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
