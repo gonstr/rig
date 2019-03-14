@@ -8,11 +8,15 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/Masterminds/sprig"
 	"github.com/gonstr/rig/pkg/fs"
 	"github.com/gonstr/rig/pkg/git"
+	"gopkg.in/yaml.v2"
+
+	"k8s.io/helm/pkg/chartutil"
 )
 
 // Template is our interface
@@ -25,6 +29,7 @@ type Template interface {
 	Version() string
 	Sync() error
 	Install() error
+	Build(filePath string) (string, error)
 }
 
 type template struct {
@@ -34,26 +39,25 @@ type template struct {
 	repo     string
 	template string
 	version  string
-	rigDir   string
 }
 
-// NewTemplate creates a template from an endpoint
-func NewTemplate(endpoint string) (Template, error) {
-	u, err := url.Parse(endpoint)
+// NewFromURI creates a template from a uri
+func NewFromURI(uri string) (Template, error) {
+	u, err := url.Parse(uri)
 	if err != nil {
 		return nil, err
 	}
 
 	if u.Scheme == "" {
-		return nil, fmt.Errorf("Unable to parse url scheme: %s", endpoint)
+		return nil, fmt.Errorf("Unable to parse url scheme: %s", uri)
 	}
 
 	if u.Host == "" {
-		return nil, fmt.Errorf("Unable to parse url host: %s", endpoint)
+		return nil, fmt.Errorf("Unable to parse url host: %s", uri)
 	}
 
 	if u.Path == "" {
-		return nil, fmt.Errorf("Unable to parse url path: %s", endpoint)
+		return nil, fmt.Errorf("Unable to parse url path: %s", uri)
 	}
 
 	version := u.Fragment
@@ -67,14 +71,43 @@ func NewTemplate(endpoint string) (Template, error) {
 		return nil, fmt.Errorf("Path does not point to a directy in the repository root: %s", u.Path)
 	}
 
-	homedir, err := fs.HomeDir()
+	return template{scheme: u.Scheme, host: u.Host, owner: split[1], repo: split[2], template: split[3], version: version}, nil
+}
+
+// NewFromFile returns a template by reading a file in the current working directory
+func NewFromFile(path string) (Template, error) {
+	m, err := readYaml(path)
 	if err != nil {
 		return nil, err
 	}
 
-	rigDir := path.Join(homedir, ".rig")
+	template := m["template"]
+	if template == "" {
+		return nil, fmt.Errorf("%s is malformed: contains no template", path)
+	}
 
-	return template{scheme: u.Scheme, host: u.Host, owner: split[1], repo: split[2], template: split[3], version: version, rigDir: rigDir}, nil
+	version := m["version"]
+	if version == "" {
+		return nil, fmt.Errorf("%s is malformed: contains no version", path)
+	}
+
+	return NewFromURI(fmt.Sprintf("%s#%s", template, version))
+}
+
+func readYaml(path string) (map[interface{}]interface{}, error) {
+	bytes, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	m := make(map[interface{}]interface{})
+
+	err = yaml.Unmarshal(bytes, &m)
+	if err != nil {
+		return nil, err
+	}
+
+	return m, nil
 }
 
 func (t template) Scheme() string {
@@ -101,12 +134,22 @@ func (t template) Version() string {
 	return t.version
 }
 
-func (t template) ownerDir() string {
-	return path.Join(t.rigDir, t.Host(), t.Owner())
+func (t template) ownerDir() (string, error) {
+	homedir, err := fs.HomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	return path.Join(path.Join(homedir, ".rig"), t.Host(), t.Owner()), nil
 }
 
-func (t template) repoDir() string {
-	return path.Join(t.ownerDir(), t.Repo())
+func (t template) repoDir() (string, error) {
+	ownerDir, err := t.ownerDir()
+	if err != nil {
+		return "", err
+	}
+
+	return path.Join(ownerDir, t.Repo()), nil
 }
 
 func (t template) gitSCPURI() string {
@@ -118,16 +161,26 @@ func (t template) templateURL() string {
 }
 
 func (t template) Sync() error {
-	if fs.DirExists(t.repoDir()) {
+	repoDir, err := t.repoDir()
+	if err != nil {
+		return err
+	}
+
+	ownerDir, err := t.ownerDir()
+	if err != nil {
+		return err
+	}
+
+	if fs.DirExists(repoDir) {
 		// Dir exists - we should clean
-		err := git.Clean(t.repoDir())
+		err := git.Clean(repoDir)
 		if err != nil {
 			return err
 		}
 	} else {
 		// Dir does not exists - we should clone
-		fs.EnsureDir(t.ownerDir())
-		git.Clone(t.ownerDir(), t.gitSCPURI())
+		fs.EnsureDir(ownerDir)
+		git.Clone(ownerDir, t.gitSCPURI())
 	}
 
 	return nil
@@ -137,11 +190,15 @@ const rigTmpl = `template: {{ .Template }}
 version: {{ .Version }}
 
 values:
-{{ .Values | indent 2 | trim }}
+  {{ .Values | indent 2 | trim }}
 `
 
 func (t template) Install() error {
-	// Temp dir
+	repoDir, err := t.repoDir()
+	if err != nil {
+		return err
+	}
+
 	tmpDir, err := fs.TempDir()
 	if err != nil {
 		fmt.Println(err)
@@ -150,14 +207,12 @@ func (t template) Install() error {
 
 	defer os.RemoveAll(tmpDir)
 
-	// Create version
 	ref := t.Version()
 	if ref != "master" {
 		ref = fmt.Sprintf("tags/%s#%s", t.template, t.Version())
 	}
 
-	// Copy to temp dir
-	err = git.Checkout(t.repoDir(), tmpDir, ref, t.template)
+	err = git.Checkout(repoDir, tmpDir, ref, t.template)
 	if err != nil {
 		return err
 	}
@@ -167,7 +222,6 @@ func (t template) Install() error {
 		return err
 	}
 
-	// Read values.yaml to input stream
 	values, err := ioutil.ReadFile(path.Join(tmpDir, t.Template(), "values.yaml"))
 	if err != nil {
 		return err
@@ -200,4 +254,74 @@ func (t template) Install() error {
 	}
 
 	return nil
+}
+
+func (t template) Build(filePath string) (string, error) {
+	m, err := readYaml(filePath)
+	if err != nil {
+		return "", err
+	}
+
+	values := m["values"]
+	if values == nil {
+		return "", fmt.Errorf("%s is malformed: contains no values", filePath)
+	}
+
+	repoDir, err := t.repoDir()
+	if err != nil {
+		return "", err
+	}
+
+	tmpDir, err := fs.TempDir()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	defer os.RemoveAll(tmpDir)
+
+	ref := t.Version()
+	if ref != "master" {
+		ref = fmt.Sprintf("tags/%s#%s", t.template, t.Version())
+	}
+
+	err = git.Checkout(repoDir, tmpDir, ref, t.template)
+	if err != nil {
+		return "", err
+	}
+
+	globPath := path.Join(tmpDir, t.template, "templates", "*")
+
+	filePaths, err := filepath.Glob(globPath)
+	if err != nil {
+		return "", err
+	}
+
+	var strs []string
+
+	for i := 0; i < len(filePaths); i++ {
+		content, err := ioutil.ReadFile(filePaths[i])
+		if err != nil {
+			return "", err
+		}
+
+		fmt.Print(string(content))
+
+		tmpl, err := gotmpl.New("build").Funcs(sprig.FuncMap()).Funcs(gotmpl.FuncMap{
+			"toYaml": chartutil.ToYaml,
+		}).Parse(string(content))
+		if err != nil {
+			return "", err
+		}
+
+		var buffer bytes.Buffer
+		err = tmpl.Execute(&buffer, m)
+		if err != nil {
+			return "", err
+		}
+
+		strs = append(strs, buffer.String())
+	}
+
+	return strings.Join(strs, "\n---\n"), nil
 }

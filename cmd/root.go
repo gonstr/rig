@@ -17,7 +17,12 @@ Complete documentation is available at https://github.com/gonstr/rig.`,
 }
 
 func Execute() {
-	if err := rootCmd.Execute(); err != nil {
+	err := rootCmd.Execute()
+	check(err)
+}
+
+func check(err error) {
+	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}

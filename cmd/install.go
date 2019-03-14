@@ -3,7 +3,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 
@@ -28,24 +27,15 @@ current working directory.
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		tmpl, err := template.NewTemplate(args[0])
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+		tmpl, err := template.NewFromURI(args[0])
+		check(err)
 
 		err = tmpl.Sync()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+		check(err)
 
 		err = tmpl.Install()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+		check(err)
 
-		fmt.Println("Template installed. Edit rig.yaml to your liking and run 'rig gen' to generate manifests.")
+		fmt.Println("Template installed. Edit rig.yaml to your liking and run 'rig build' to generate manifests.")
 	},
 }
