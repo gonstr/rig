@@ -82,17 +82,15 @@ func NewFromFile(path string) (Template, error) {
 		return nil, err
 	}
 
-	template := m["template"]
+	template, ok := m["template"].(string)
+	if !ok {
+		return nil, fmt.Errorf("%s is malformed: could not parse template url", path)
+	}
 	if template == "" {
 		return nil, fmt.Errorf("%s is malformed: contains no template", path)
 	}
 
-	version := m["version"]
-	if version == "" {
-		return nil, fmt.Errorf("%s is malformed: contains no version", path)
-	}
-
-	return NewFromURI(fmt.Sprintf("%s#%s", template, version))
+	return NewFromURI(template)
 }
 
 // FuncMap returns funcmap for use in go templating
@@ -178,7 +176,7 @@ func (t template) gitSCPURI() string {
 }
 
 func (t template) templateURL() string {
-	return fmt.Sprintf("https://%s/%s/%s/%s", t.host, t.owner, t.repo, t.template)
+	return fmt.Sprintf("https://%s/%s/%s/%s#%s", t.host, t.owner, t.repo, t.template, t.version)
 }
 
 func (t template) Sync() error {
@@ -208,7 +206,6 @@ func (t template) Sync() error {
 }
 
 const rigTmpl = `template: {{ .Template }}
-version: {{ .Version }}
 
 values:
   {{ .Values | indent 2 | trim }}
@@ -227,12 +224,7 @@ func (t template) Install() error {
 
 	defer os.RemoveAll(tmpDir)
 
-	ref := t.Version()
-	if ref != "master" {
-		ref = fmt.Sprintf("tags/%s#%s", t.template, t.Version())
-	}
-
-	err = git.Checkout(repoDir, tmpDir, ref, t.template)
+	err = git.Checkout(repoDir, tmpDir, t.Version(), t.template)
 	if err != nil {
 		return err
 	}
@@ -254,11 +246,9 @@ func (t template) Install() error {
 
 	tmplData := struct {
 		Template string
-		Version  string
 		Values   string
 	}{
 		Template: t.templateURL(),
-		Version:  t.Version(),
 		Values:   string(values),
 	}
 
@@ -294,12 +284,7 @@ func (t template) Build(filePath string) (string, error) {
 
 	defer os.RemoveAll(tmpDir)
 
-	ref := t.Version()
-	if ref != "master" {
-		ref = fmt.Sprintf("tags/%s#%s", t.template, t.Version())
-	}
-
-	err = git.Checkout(repoDir, tmpDir, ref, t.template)
+	err = git.Checkout(repoDir, tmpDir, t.Version(), t.template)
 	if err != nil {
 		return "", err
 	}
