@@ -3,18 +3,19 @@ package template
 import (
 	"bytes"
 	"fmt"
-	gotmpl "html/template"
 	"io/ioutil"
 	"net/url"
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
+	gotmpl "text/template"
 
 	"github.com/Masterminds/sprig"
+	"github.com/ghodss/yaml"
 	"github.com/gonstr/rig/pkg/fs"
 	"github.com/gonstr/rig/pkg/git"
-	"gopkg.in/yaml.v2"
 
 	"k8s.io/helm/pkg/chartutil"
 )
@@ -94,13 +95,33 @@ func NewFromFile(path string) (Template, error) {
 	return NewFromURI(fmt.Sprintf("%s#%s", template, version))
 }
 
-func readYaml(path string) (map[interface{}]interface{}, error) {
+// FuncMap returns funcmap for use in go templating
+func FuncMap() gotmpl.FuncMap {
+	f := sprig.TxtFuncMap()
+
+	// Add some extra functionality
+	extra := gotmpl.FuncMap{
+		"toToml":   chartutil.ToToml,
+		"toYaml":   chartutil.ToYaml,
+		"fromYaml": chartutil.FromYaml,
+		"toJson":   chartutil.ToJson,
+		"fromJson": chartutil.FromJson,
+	}
+
+	for k, v := range extra {
+		f[k] = v
+	}
+
+	return f
+}
+
+func readYaml(path string) (map[string]interface{}, error) {
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	m := make(map[interface{}]interface{})
+	m := make(map[string]interface{})
 
 	err = yaml.Unmarshal(bytes, &m)
 	if err != nil {
@@ -201,8 +222,7 @@ func (t template) Install() error {
 
 	tmpDir, err := fs.TempDir()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
 	defer os.RemoveAll(tmpDir)
@@ -227,7 +247,7 @@ func (t template) Install() error {
 		return err
 	}
 
-	tmpl, err := gotmpl.New("rig").Funcs(sprig.FuncMap()).Parse(rigTmpl)
+	tmpl, err := gotmpl.New("rig").Funcs(FuncMap()).Parse(rigTmpl)
 	if err != nil {
 		return err
 	}
@@ -262,11 +282,6 @@ func (t template) Build(filePath string) (string, error) {
 		return "", err
 	}
 
-	values := m["values"]
-	if values == nil {
-		return "", fmt.Errorf("%s is malformed: contains no values", filePath)
-	}
-
 	repoDir, err := t.repoDir()
 	if err != nil {
 		return "", err
@@ -274,8 +289,7 @@ func (t template) Build(filePath string) (string, error) {
 
 	tmpDir, err := fs.TempDir()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return "", err
 	}
 
 	defer os.RemoveAll(tmpDir)
@@ -305,11 +319,7 @@ func (t template) Build(filePath string) (string, error) {
 			return "", err
 		}
 
-		fmt.Print(string(content))
-
-		tmpl, err := gotmpl.New("build").Funcs(sprig.FuncMap()).Funcs(gotmpl.FuncMap{
-			"toYaml": chartutil.ToYaml,
-		}).Parse(string(content))
+		tmpl, err := gotmpl.New("build").Option("missingkey=error").Funcs(FuncMap()).Parse(string(content))
 		if err != nil {
 			return "", err
 		}
@@ -323,5 +333,9 @@ func (t template) Build(filePath string) (string, error) {
 		strs = append(strs, buffer.String())
 	}
 
-	return strings.Join(strs, "\n---\n"), nil
+	joined := strings.Join(strs, "\n---\n")
+
+	re := regexp.MustCompile(`(?m)^\s*$[\r\n]*|[\r\n]+\s+\z`)
+
+	return re.ReplaceAllString(joined, ""), nil
 }
