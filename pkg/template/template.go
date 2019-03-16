@@ -2,6 +2,7 @@ package template
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/url"
@@ -29,7 +30,7 @@ type Template interface {
 	Template() string
 	Version() string
 	Sync() error
-	Install() error
+	Install(force bool) error
 	Build(filePath string) (string, error)
 }
 
@@ -190,7 +191,7 @@ func (t template) Sync() error {
 		return err
 	}
 
-	if fs.DirExists(repoDir) {
+	if fs.PathExists(repoDir) {
 		// Dir exists - we should clean
 		err := git.Clean(repoDir)
 		if err != nil {
@@ -211,7 +212,7 @@ values:
   {{ .Values | indent 2 | trim }}
 `
 
-func (t template) Install() error {
+func (t template) Install(force bool) error {
 	repoDir, err := t.repoDir()
 	if err != nil {
 		return err
@@ -232,6 +233,10 @@ func (t template) Install() error {
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
+	}
+
+	if fs.PathExists(path.Join(wd, "rig.yaml")) && !force {
+		return errors.New("rig.yaml already exists. install with --force or -f to install anyway")
 	}
 
 	values, err := ioutil.ReadFile(path.Join(tmpDir, t.Template(), "values.yaml"))

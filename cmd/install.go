@@ -9,7 +9,10 @@ import (
 	"github.com/gonstr/rig/pkg/template"
 )
 
+var force bool
+
 func init() {
+	installCmd.Flags().BoolVarP(&force, "force", "f", false, "Install even if rig.yaml already exists")
 	rootCmd.AddCommand(installCmd)
 }
 
@@ -33,7 +36,7 @@ current working directory.
 		err = tmpl.Sync()
 		check(err)
 
-		err = tmpl.Install()
+		err = tmpl.Install(force)
 		check(err)
 
 		fmt.Println("Template installed. Edit rig.yaml to your liking and run 'rig build' to generate manifests.")

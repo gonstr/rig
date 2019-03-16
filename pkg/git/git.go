@@ -1,6 +1,7 @@
 package git
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 )
@@ -9,9 +10,9 @@ import (
 func Clone(dir string, uri string) error {
 	cmd := exec.Command("git", "clone", uri)
 	cmd.Dir = dir
-	err := cmd.Run()
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return err
+		return errors.New(string(out))
 	}
 
 	return nil
@@ -21,30 +22,30 @@ func Clone(dir string, uri string) error {
 func Clean(dir string) error {
 	cmd := exec.Command("git", "fetch", "--tags")
 	cmd.Dir = dir
-	err := cmd.Run()
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return err
+		return errors.New(string(out))
 	}
 
 	cmd = exec.Command("git", "checkout", "master")
 	cmd.Dir = dir
-	err = cmd.Run()
+	out, err = cmd.CombinedOutput()
 	if err != nil {
-		return err
+		return errors.New(string(out))
 	}
 
 	cmd = exec.Command("git", "clean", "-d", "-f")
 	cmd.Dir = dir
-	err = cmd.Run()
+	out, err = cmd.CombinedOutput()
 	if err != nil {
-		return err
+		return errors.New(string(out))
 	}
 
 	cmd = exec.Command("git", "pull", "-q", "origin", "master")
 	cmd.Dir = dir
-	err = cmd.Run()
+	out, err = cmd.CombinedOutput()
 	if err != nil {
-		return err
+		return errors.New(string(out))
 	}
 
 	return nil
@@ -54,9 +55,9 @@ func Clean(dir string) error {
 func Checkout(repoDir string, targetDir string, ref string, folder string) error {
 	cmd := exec.Command("git", fmt.Sprintf("--work-tree=%s", targetDir), "checkout", ref, "--", folder)
 	cmd.Dir = repoDir
-	err := cmd.Run()
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return err
+		return errors.New(string(out))
 	}
 	return nil
 }
