@@ -22,9 +22,16 @@ func init() {
 
 var buildCmd = &cobra.Command{
 	Use:   "build",
-	Short: "Builds a rig.yaml template to stdout",
-	Long: `Builds a rig.yaml template to stdout. Values are read from
-rig.yaml and from command line args.
+	Short: "Builds the installed rig template to stdout",
+	Long: `Builds the installed rig template. Template values are defined in rig.yaml but can
+also be defined in command line arguments. Values defined in arguments supersede
+values in rig.yaml.
+
+Examples:
+rig build
+rig build --value deployment.tag=$(git rev-parse HEAD)
+rig build --value host=my-app.${CLUSTER}.example.com
+
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		wd, err := os.Getwd()

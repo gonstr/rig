@@ -12,16 +12,23 @@ import (
 var force bool
 
 func init() {
-	installCmd.Flags().BoolVarP(&force, "force", "f", false, "FORCE install even if rig.yaml already exists. This will overwrite rig.yaml")
+	installCmd.Flags().BoolVarP(&force, "force", "f", false, "FORCE install even if a template has already been installed. This will overwrite rig.yaml")
 
 	rootCmd.AddCommand(installCmd)
 }
 
 var installCmd = &cobra.Command{
 	Use:   "install",
-	Short: "Installs a rig template in the current directory",
-	Long: `Downloads a rig template and installs a .rig file in the
-current working directory.
+	Short: "Installs a remote rig template to the current directory",
+	Long: `Installs a rig template from a remote github repository to the current directory.
+Template data will be stored in rig.yaml. Git branch/tag or commit can be defined
+as a fragment in the template url.
+
+Examples:
+
+rig install https://github.com/gonstr/rig-templates/simple-app
+rig install https://github.com/gonstr/rig-templates/simple-app#master
+rig install https://github.com/gonstr/rig-templates/simple-app#simple-app/v1.0.0
 	`,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 1 {
@@ -40,6 +47,8 @@ current working directory.
 		err = tmpl.Install(force)
 		check(err)
 
-		fmt.Println("Template installed. Edit rig.yaml to your liking and run 'rig build' to generate manifests.")
+		fmt.Println(`Template installed. Edit values in rig.yaml to your liking and run 'rig build' to build the template.
+
+Values can also be passed as command line arguments when building. i.e 'rig build --value tag=v1.0.0'.`)
 	},
 }

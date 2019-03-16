@@ -28,7 +28,7 @@ type Template interface {
 	Host() string
 	Owner() string
 	Repo() string
-	Template() string
+	Path() string
 	Version() string
 	Sync() error
 	Install(force bool) error
@@ -36,12 +36,12 @@ type Template interface {
 }
 
 type template struct {
-	scheme   string
-	host     string
-	owner    string
-	repo     string
-	template string
-	version  string
+	scheme  string
+	host    string
+	owner   string
+	repo    string
+	path    string
+	version string
 }
 
 // NewFromURI creates a template from a uri
@@ -70,11 +70,15 @@ func NewFromURI(uri string) (Template, error) {
 
 	split := strings.Split(u.Path, "/")
 
-	if len(split) != 4 {
-		return nil, fmt.Errorf("Path does not point to a directy in the repository root: %s", u.Path)
+	if len(split) < 3 {
+		return nil, fmt.Errorf("Invalid git repository url: %s", u.Path)
 	}
 
-	return template{scheme: u.Scheme, host: u.Host, owner: split[1], repo: split[2], template: split[3], version: version}, nil
+	owner := split[1]
+	repo := split[2]
+	path := strings.Join(split[3:], "/")
+
+	return template{scheme: u.Scheme, host: u.Host, owner: owner, repo: repo, path: path, version: version}, nil
 }
 
 // NewFromFile returns a template by reading a file in the current working directory
@@ -147,8 +151,8 @@ func (t template) Repo() string {
 	return t.repo
 }
 
-func (t template) Template() string {
-	return t.template
+func (t template) Path() string {
+	return t.path
 }
 
 func (t template) Version() string {
@@ -178,7 +182,13 @@ func (t template) gitSCPURI() string {
 }
 
 func (t template) templateURL() string {
-	return fmt.Sprintf("https://%s/%s/%s/%s#%s", t.host, t.owner, t.repo, t.template, t.version)
+	url := fmt.Sprintf("%s://%s/%s/%s", t.scheme, t.host, t.owner, t.repo)
+
+	if t.path != "" {
+		url = fmt.Sprintf("%s/%s", url, t.path)
+	}
+
+	return fmt.Sprintf("%s#%s", url, t.version)
 }
 
 func (t template) Sync() error {
@@ -226,7 +236,7 @@ func (t template) Install(force bool) error {
 
 	defer os.RemoveAll(tmpDir)
 
-	err = git.Checkout(repoDir, tmpDir, t.Version(), t.template)
+	err = git.Checkout(repoDir, tmpDir, t.Version(), t.path)
 	if err != nil {
 		return err
 	}
@@ -240,7 +250,7 @@ func (t template) Install(force bool) error {
 		return errors.New("rig.yaml already exists. install with --force or -f to install anyway")
 	}
 
-	values, err := ioutil.ReadFile(path.Join(tmpDir, t.Template(), "values.yaml"))
+	values, err := ioutil.ReadFile(path.Join(tmpDir, t.path, "values.yaml"))
 	if err != nil {
 		return err
 	}
@@ -290,12 +300,12 @@ func (t template) Build(filePath string, values []string, stringValues []string)
 
 	defer os.RemoveAll(tmpDir)
 
-	err = git.Checkout(repoDir, tmpDir, t.Version(), t.template)
+	err = git.Checkout(repoDir, tmpDir, t.Version(), t.path)
 	if err != nil {
 		return "", err
 	}
 
-	globPath := path.Join(tmpDir, t.template, "templates", "*")
+	globPath := path.Join(tmpDir, t.path, "templates", "*")
 
 	filePaths, err := filepath.Glob(globPath)
 	if err != nil {

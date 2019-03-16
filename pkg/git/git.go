@@ -52,8 +52,12 @@ func Clean(dir string) error {
 }
 
 // Checkout does a git checkout of a local repo/folder to a target directory
-func Checkout(repoDir string, targetDir string, ref string, folder string) error {
-	cmd := exec.Command("git", fmt.Sprintf("--work-tree=%s", targetDir), "checkout", ref, "--", folder)
+func Checkout(repoDir string, targetDir string, ref string, path string) error {
+	if path == "" {
+		path = "."
+	}
+
+	cmd := exec.Command("git", fmt.Sprintf("--work-tree=%s", targetDir), "checkout", ref, "--", path)
 	cmd.Dir = repoDir
 	out, err := cmd.CombinedOutput()
 	if err != nil {
