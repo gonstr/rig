@@ -19,6 +19,7 @@ import (
 	"github.com/gonstr/rig/pkg/git"
 
 	"k8s.io/helm/pkg/chartutil"
+	"k8s.io/helm/pkg/strvals"
 )
 
 // Template is our interface
@@ -31,7 +32,7 @@ type Template interface {
 	Version() string
 	Sync() error
 	Install(force bool) error
-	Build(filePath string) (string, error)
+	Build(filePath string, values []string, stringValues []string) (string, error)
 }
 
 type template struct {
@@ -271,8 +272,8 @@ func (t template) Install(force bool) error {
 	return nil
 }
 
-func (t template) Build(filePath string) (string, error) {
-	m, err := readYaml(filePath)
+func (t template) Build(filePath string, values []string, stringValues []string) (string, error) {
+	vals, err := mergeValues(filePath, values, stringValues)
 	if err != nil {
 		return "", err
 	}
@@ -315,7 +316,7 @@ func (t template) Build(filePath string) (string, error) {
 		}
 
 		var buffer bytes.Buffer
-		err = tmpl.Execute(&buffer, m)
+		err = tmpl.Execute(&buffer, vals)
 		if err != nil {
 			return "", err
 		}
@@ -328,4 +329,33 @@ func (t template) Build(filePath string) (string, error) {
 	re := regexp.MustCompile(`(?m)^\s*$[\r\n]*|[\r\n]+\s+\z`)
 
 	return re.ReplaceAllString(joined, ""), nil
+}
+
+func mergeValues(filePath string, values []string, stringValues []string) (map[string]interface{}, error) {
+	// Values from rig.yaml
+	file, err := readYaml(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	vals, ok := file["values"].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("Failed to parse values: %s", filePath)
+	}
+
+	// User specified a value via --value
+	for _, value := range values {
+		if err := strvals.ParseInto(value, vals); err != nil {
+			return nil, fmt.Errorf("failed parsing --value data: %s", err)
+		}
+	}
+
+	// User specified a value via --string-value
+	for _, value := range stringValues {
+		if err := strvals.ParseIntoString(value, vals); err != nil {
+			return nil, fmt.Errorf("failed parsing --string-value data: %s", err)
+		}
+	}
+
+	return file, nil
 }

@@ -10,7 +10,13 @@ import (
 	"github.com/gonstr/rig/pkg/template"
 )
 
+var values []string
+var stringValues []string
+
 func init() {
+	buildCmd.Flags().StringArrayVar(&values, "value", []string{}, "set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
+	buildCmd.Flags().StringArrayVar(&stringValues, "string-value", []string{}, "set STRING values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
+
 	rootCmd.AddCommand(buildCmd)
 }
 
@@ -32,7 +38,7 @@ rig.yaml and from command line args.
 		err = tmpl.Sync()
 		check(err)
 
-		yaml, err := tmpl.Build(filePath)
+		yaml, err := tmpl.Build(filePath, values, stringValues)
 		check(err)
 
 		fmt.Print(yaml)

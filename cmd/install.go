@@ -12,7 +12,8 @@ import (
 var force bool
 
 func init() {
-	installCmd.Flags().BoolVarP(&force, "force", "f", false, "Install even if rig.yaml already exists")
+	installCmd.Flags().BoolVarP(&force, "force", "f", false, "FORCE install even if rig.yaml already exists. This will overwrite rig.yaml")
+
 	rootCmd.AddCommand(installCmd)
 }
 
