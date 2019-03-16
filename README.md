@@ -1,38 +1,32 @@
 ## rig
 
-Command line tool for building and managing rig templates.
+Command line tool for managing rig templates.
 
 ```
-Usage
-  $ rig [command] <args>
+A code-gen tool for k8s manifests.
 
-Commands
-  install
-    Install a rig template from a github repo to the current
-    working directory.
+Manage your manifests in versioned templates hosted in any git repository.
+Complete documentation is available at https://github.com/gonstr/rig.
 
-  build
-    Builds the installed template and prints it to stdout.
-    Template parameters are read from the rig.yaml file and
-    the -p argument.
+Usage:
+  rig [command]
 
-    --parameters, -p
-      Template parameters in a comma separated key=value
-      list. Parameters passed this way overrides parameters
-      defined in the rig.yaml file.
+Available Commands:
+  build       Builds a rig.yaml template to stdout
+  help        Help about any command
+  install     Installs a rig template in the current directory
+  version     Print the version number of rig
 
-    --output-dir, -o
-      Writes template to a directory instead of stdout.
+Flags:
+  -h, --help   help for rig
 
-Examples
-  $ rig install fareoffice/rig-templates/simple-app
-  $ rig install fareoffice/rig-templates/simple-app#1.0.0
-  $ rig build
-  $ rig build -p key1=value,key2=value --output-dir ./output
+Use "rig [command] --help" for more information about a command.
 ```
 
-#### Install and use with go
+#### Installing
+
+Either download release assets from the latest github release or install using go:
 
 ```shell
-
+go get github.com/gonstr/rig
 ```
