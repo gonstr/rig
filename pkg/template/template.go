@@ -287,6 +287,9 @@ func (t template) Install(force bool) error {
 	return nil
 }
 
+var emptyLines = regexp.MustCompile(`(?m)^\s*$[\r\n]*|[\r\n]+\s+\z`)
+var containsNonWhitespace = regexp.MustCompile(`\S+`)
+
 func (t template) Build(filePath string, values []string, stringValues []string) (string, error) {
 	file, err := readYaml(filePath)
 	if err != nil {
@@ -354,16 +357,16 @@ func (t template) Build(filePath string, values []string, stringValues []string)
 			return "", err
 		}
 
-		re := regexp.MustCompile(`(?m)^\s*$[\r\n]*|[\r\n]+\s+\z`)
+		str := buffer.String()
 
-		str := re.ReplaceAllString(buffer.String(), "")
-
-		if str != "" {
+		if containsNonWhitespace.MatchString(str) {
 			strs = append(strs, str)
 		}
 	}
 
-	return strings.Join(strs, "\n---\n"), nil
+	joined := strings.Join(strs, "\n---\n")
+
+	return emptyLines.ReplaceAllString(joined, ""), nil
 }
 
 func mergeValues(filePath string, values []string, stringValues []string) (map[string]interface{}, error) {
