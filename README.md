@@ -31,9 +31,18 @@ rig build --value deployment.tag=$(git rev-parse HEAD) | kubectl apply -f -
 
 ## Installing
 
-- Make sure git is installed
-- Download release assets from the latest github release or install using go:
+`rig` requires `git` so make sure that it's isntalled.
+
+Install using the install script:
+
+```shell
+curl https://raw.githubusercontent.com/gonstr/rig/master/install.sh | sh
+```
+
+Install using `go get`:
 
 ```shell
 go get github.com/gonstr/rig
 ```
+
+Or just download binaries from the latest releases here on github.
