@@ -248,7 +248,7 @@ func (t template) Install(force bool) error {
 	}
 
 	if fs.PathExists(path.Join(wd, "rig.yaml")) && !force {
-		return errors.New("rig.yaml already exists. install with --force or -f to install anyway")
+		return errors.New("rig.yaml already exists. FORCE install with --force or -f.")
 	}
 
 	values, err := ioutil.ReadFile(path.Join(tmpDir, t.path, "values.yaml"))
@@ -354,14 +354,16 @@ func (t template) Build(filePath string, values []string, stringValues []string)
 			return "", err
 		}
 
-		strs = append(strs, buffer.String())
+		re := regexp.MustCompile(`(?m)^\s*$[\r\n]*|[\r\n]+\s+\z`)
+
+		str := re.ReplaceAllString(buffer.String(), "")
+
+		if str != "" {
+			strs = append(strs, str)
+		}
 	}
 
-	joined := strings.Join(strs, "\n---\n")
-
-	re := regexp.MustCompile(`(?m)^\s*$[\r\n]*|[\r\n]+\s+\z`)
-
-	return re.ReplaceAllString(joined, ""), nil
+	return strings.Join(strs, "\n---\n"), nil
 }
 
 func mergeValues(filePath string, values []string, stringValues []string) (map[string]interface{}, error) {

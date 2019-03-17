@@ -25,5 +25,5 @@ deployment:
         name: mysecret
         optional: false
 
-#ingress:
+ingress:
 #  host: myapp.mydomain.com
