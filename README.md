@@ -45,4 +45,4 @@ Install using `go get`:
 go get github.com/gonstr/rig
 ```
 
-Or just download binaries from the latest releases here on github.
+Or just download binaries from the latest release.
