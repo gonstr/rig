@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ .values.name }}
+  name: {{ .values.name }}
+  namespace: {{ .values.namespace }}
+spec:
+  replicas: {{ .values.deployment.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .values.name }}
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: {{ .values.name }}
+    spec:
+      containers:
+      - image: {{ .values.deployment.image }}:{{ .values.deployment.tag }}
+        imagePullPolicy: Always
+        name: {{ .values.name }}
+        ports:
+        - containerPort: {{ .values.deployment.port }}
+        livenessProbe:
+          initialDelaySeconds: 20
+          tcpSocket:
+            port: {{ .values.deployment.port }}
+          timeoutSeconds: 3
+        readinessProbe:
+          httpGet:
+            path: {{ .values.deployment.readinessPath }}
+            port: {{ .values.deployment.port }}
+          initialDelaySeconds: 20
+          timeoutSeconds: 3
+        resources:
+{{ toYaml .values.deployment.resources | indent 10 }}
+{{- with .values.deployment.env }}
+        env:
+{{ toYaml . | indent 10 }}
+{{- end }}
+{{- with .values.deployment.envFrom }}
+        envFrom:
+{{ toYaml . | indent 10 }}
+{{- end }}

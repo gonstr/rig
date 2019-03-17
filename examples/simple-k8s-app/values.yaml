@@ -1,0 +1,29 @@
+name: simple-app
+namespace: simple-app
+
+deployment:
+  replicas: 2
+  image: gonstr/simple-app
+  # tag: latest
+  port: 8080
+  readinessPath: /health
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 400m
+    limits:
+      cpu: 400m
+      memory: 800m
+  
+  env:
+    - name: FOO
+      value: bar
+  
+  envFrom:
+    - secretRef:
+        name: mysecret
+        optional: false
+
+#ingress:
+#  host: myapp.mydomain.com
