@@ -218,6 +218,7 @@ func (t template) Sync() error {
 }
 
 const rigTmpl = `template: {{ .Template }}
+digest: {{ .Digest }}
 
 values:
   {{ .Values | indent 2 | trim }}
@@ -255,6 +256,8 @@ func (t template) Install(force bool) error {
 		return err
 	}
 
+	digest, err := fs.DirectoryDigest(path.Join(tmpDir, t.path, "templates"))
+
 	tmpl, err := gotmpl.New("rig").Funcs(FuncMap()).Parse(rigTmpl)
 	if err != nil {
 		return err
@@ -263,9 +266,11 @@ func (t template) Install(force bool) error {
 	tmplData := struct {
 		Template string
 		Values   string
+		Digest   string
 	}{
 		Template: t.templateURL(),
 		Values:   string(values),
+		Digest:   digest,
 	}
 
 	var buffer bytes.Buffer
@@ -283,6 +288,19 @@ func (t template) Install(force bool) error {
 }
 
 func (t template) Build(filePath string, values []string, stringValues []string) (string, error) {
+	file, err := readYaml(filePath)
+	if err != nil {
+		return "", err
+	}
+
+	fileDigest, ok := file["digest"].(string)
+	if !ok {
+		return "", fmt.Errorf("Unable to read digest: %s", filePath)
+	}
+	if fileDigest == "" {
+		return "", fmt.Errorf("Unable to read digest: %s", filePath)
+	}
+
 	vals, err := mergeValues(filePath, values, stringValues)
 	if err != nil {
 		return "", err
@@ -303,6 +321,11 @@ func (t template) Build(filePath string, values []string, stringValues []string)
 	err = git.Checkout(repoDir, tmpDir, t.Version(), t.path)
 	if err != nil {
 		return "", err
+	}
+
+	digest, err := fs.DirectoryDigest(path.Join(tmpDir, t.path, "templates"))
+	if digest != fileDigest {
+		return "", fmt.Errorf("Template digest missmatch: %s does not equal %s", digest, fileDigest)
 	}
 
 	globPath := path.Join(tmpDir, t.path, "templates", "*")
