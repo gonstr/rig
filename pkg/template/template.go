@@ -248,7 +248,7 @@ func (t template) Install(force bool) error {
 	}
 
 	if fs.PathExists(path.Join(wd, "rig.yaml")) && !force {
-		return errors.New("rig.yaml already exists. FORCE install with --force or -f.")
+		return errors.New("rig.yaml already exists. FORCE install with --force or -f")
 	}
 
 	values, err := ioutil.ReadFile(path.Join(tmpDir, t.path, "values.yaml"))
