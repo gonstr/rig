@@ -47,8 +47,6 @@ rig install https://github.com/gonstr/rig-templates/simple-app#simple-app/v1.0.0
 		err = tmpl.Install(force)
 		check(err)
 
-		fmt.Println(`Template installed. Edit values in rig.yaml to your liking and run 'rig build' to build the template.
-
-Values can also be passed as command line arguments when building. i.e 'rig build --value tag=v1.0.0'.`)
+		fmt.Println("Template installed. Edit values in rig.yaml to your liking and run 'rig build' to build the template")
 	},
 }
