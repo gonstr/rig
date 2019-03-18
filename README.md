@@ -29,7 +29,7 @@ to kubernetes use `--value` and pipe the output to `kubectl`:
 rig build --value deployment.tag=$(git rev-parse HEAD) | kubectl apply -f -
 ```
 
-## Example usage with a templates stored locally
+## Example usage with templates stored locally
 
 ```yaml
 echo "
