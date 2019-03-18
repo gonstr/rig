@@ -70,3 +70,7 @@ go get github.com/gonstr/rig
 ```
 
 Or just download binaries from the latest release.
+
+## Docker image
+
+[gonstr/rig](https://cloud.docker.com/u/gonstr/repository/docker/gonstr/rig) has `rig` and `git` installed.
