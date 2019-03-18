@@ -44,8 +44,8 @@ type template struct {
 	version string
 }
 
-// NewFromURI creates a template from a uri
-func NewFromURI(uri string) (Template, error) {
+// NewFromURL creates a template from a uri
+func NewFromURL(uri string) (Template, error) {
 	u, err := url.Parse(uri)
 	if err != nil {
 		return nil, err
@@ -81,22 +81,35 @@ func NewFromURI(uri string) (Template, error) {
 	return template{scheme: u.Scheme, host: u.Host, owner: owner, repo: repo, path: path, version: version}, nil
 }
 
+// NewFromPath creates a template from a local dir path
+func NewFromPath(path string) (Template, error) {
+	return template{scheme: "", host: "", owner: "", repo: "", path: path, version: ""}, nil
+}
+
 // NewFromFile returns a template by reading a file in the current working directory
-func NewFromFile(path string) (Template, error) {
-	m, err := readYaml(path)
+func NewFromFile(filePath string) (Template, error) {
+	file, err := readYaml(filePath)
 	if err != nil {
 		return nil, err
 	}
 
-	template, ok := m["template"].(string)
-	if !ok {
-		return nil, fmt.Errorf("%s is malformed: could not parse template url", path)
-	}
-	if template == "" {
-		return nil, fmt.Errorf("%s is malformed: contains no template", path)
+	template, templateOk := file["template"].(map[string]interface{})
+	if !templateOk {
+		return nil, fmt.Errorf("%s is malformed: could not parse template", filePath)
 	}
 
-	return NewFromURI(template)
+	templatePath, templatePathOk := template["path"].(string)
+	templteURL, templteURLOk := template["url"].(string)
+
+	if (!templatePathOk || templatePath == "") && (!templteURLOk || templteURL == "") {
+		return nil, fmt.Errorf("%s is malformed: does not contain url or path", filePath)
+	}
+
+	if templatePath != "" {
+		return NewFromPath(templatePath)
+	}
+
+	return NewFromURL(templteURL)
 }
 
 // FuncMap returns funcmap for use in go templating
@@ -217,8 +230,9 @@ func (t template) Sync() error {
 	return nil
 }
 
-const rigTmpl = `template: {{ .Template }}
-digest: {{ .Digest }}
+const rigTmpl = `template:
+  url: {{ .URL }}
+  digest: {{ .Digest }}
 
 values:
   {{ .Values | indent 2 | trim }}
@@ -264,13 +278,13 @@ func (t template) Install(force bool) error {
 	}
 
 	tmplData := struct {
-		Template string
-		Values   string
-		Digest   string
+		URL    string
+		Digest string
+		Values string
 	}{
-		Template: t.templateURL(),
-		Values:   string(values),
-		Digest:   digest,
+		URL:    t.templateURL(),
+		Digest: digest,
+		Values: string(values),
 	}
 
 	var buffer bytes.Buffer
@@ -296,46 +310,72 @@ func (t template) Build(filePath string, values []string, stringValues []string)
 		return "", err
 	}
 
-	fileDigest, ok := file["digest"].(string)
-	if !ok {
-		return "", fmt.Errorf("Unable to read digest: %s", filePath)
-	}
-	if fileDigest == "" {
-		return "", fmt.Errorf("Unable to read digest: %s", filePath)
-	}
-
 	vals, err := mergeValues(filePath, values, stringValues)
 	if err != nil {
 		return "", err
 	}
 
-	repoDir, err := t.repoDir()
-	if err != nil {
-		return "", err
+	template, templateOk := file["template"].(map[string]interface{})
+	if !templateOk {
+		return "", fmt.Errorf("%s is malformed: could not parse template", filePath)
 	}
 
-	tmpDir, err := fs.TempDir()
-	if err != nil {
-		return "", err
+	templatePath, templatePathOk := template["path"].(string)
+	templteURL, templteURLOk := template["url"].(string)
+
+	if (!templatePathOk || templatePath == "") && (!templteURLOk || templteURL == "") {
+		return "", fmt.Errorf("%s is malformed: does not contain url or path", filePath)
 	}
 
-	defer os.RemoveAll(tmpDir)
+	var filePaths []string
 
-	err = git.Checkout(repoDir, tmpDir, t.Version(), t.path)
-	if err != nil {
-		return "", err
-	}
+	if templatePath != "" {
+		wd, err := os.Getwd()
+		if err != nil {
+			return "", err
+		}
 
-	digest, err := fs.DirectoryDigest(path.Join(tmpDir, t.path, "templates"))
-	if digest != fileDigest {
-		return "", fmt.Errorf("Template digest missmatch: %s does not equal %s", digest, fileDigest)
-	}
+		filePaths, err = filepath.Glob(path.Join(wd, templatePath, "*"))
+		if err != nil {
+			return "", err
+		}
+	} else {
+		digest, ok := template["digest"].(string)
+		if !ok {
+			return "", fmt.Errorf("%s is malformed: could not parse template digest", filePath)
+		}
+		if digest == "" {
+			return "", fmt.Errorf("Unable to read digest: %s", filePath)
+		}
 
-	globPath := path.Join(tmpDir, t.path, "templates", "*")
+		repoDir, err := t.repoDir()
+		if err != nil {
+			return "", err
+		}
 
-	filePaths, err := filepath.Glob(globPath)
-	if err != nil {
-		return "", err
+		tmpDir, err := fs.TempDir()
+		if err != nil {
+			return "", err
+		}
+
+		defer os.RemoveAll(tmpDir)
+
+		err = git.Checkout(repoDir, tmpDir, t.Version(), t.path)
+		if err != nil {
+			return "", err
+		}
+
+		buildDigest, err := fs.DirectoryDigest(path.Join(tmpDir, t.path, "templates"))
+		if digest != buildDigest {
+			return "", fmt.Errorf("Template digest missmatch: %s does not equal %s", digest, buildDigest)
+		}
+
+		globPath := path.Join(tmpDir, t.path, "templates", "*")
+
+		filePaths, err = filepath.Glob(globPath)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	var strs []string

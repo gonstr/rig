@@ -2,21 +2,21 @@
 
 `rig` is a kubernetes manifest pre-processor and templating tool.
 
-- Templates are stored in remote git repositories, enabling the ability
+- Templates can be stored in remote git repositories, enabling the ability
   to share templates across apps.
 - Built on go templates with support for all the templating features of Helm.
 
-## Example usage
+## Example usage with templates stored remotely
 
-Install a rig template:
+"Install" the remote template:
 
 ```shell
 rig install https://github.com/foo/bar/simple-app#simple-app/v1.0.0
 ```
 
 A `rig.yaml` file will be created in the current working directory referencing
-the remote template. The file will also contain template values. Edit `rig.yaml`
-to your liking and build the template to stdout:
+the remote repository and gitref. The file will also contain template values.
+Edit `rig.yaml` to your liking and build the template to stdout:
 
 ```shell
 rig build
@@ -27,6 +27,30 @@ to kubernetes use `--value` and pipe the output to `kubectl`:
 
 ```shell
 rig build --value deployment.tag=$(git rev-parse HEAD) | kubectl apply -f -
+```
+
+## Example usage with a templates stored locally
+
+```yaml
+echo "
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .values.name }}
+spec:
+  ports:
+  - port: {{ .values.host_port }}
+    targetPort: {{ env "TARGET_PORT" }}
+" > ./templates/service.yaml
+
+echo "
+template:
+  path: templates
+values:
+  name: myservice
+" > rig.yaml
+
+TARGET_PORT=8080 rig build --string-value host_port=80
 ```
 
 ## Installing

@@ -42,8 +42,10 @@ rig build --value host=my-app.${CLUSTER}.example.com
 		tmpl, err := template.NewFromFile(filePath)
 		check(err)
 
-		err = tmpl.Sync()
-		check(err)
+		if tmpl.Scheme() != "" {
+			err = tmpl.Sync()
+			check(err)
+		}
 
 		yaml, err := tmpl.Build(filePath, values, stringValues)
 		check(err)
