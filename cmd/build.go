@@ -22,10 +22,10 @@ func init() {
 
 var buildCmd = &cobra.Command{
 	Use:   "build",
-	Short: "Builds the installed rig template to stdout",
-	Long: `Builds the installed rig template. Template values are defined in rig.yaml but can
-also be defined in command line arguments. Values defined in arguments supersede
-values in rig.yaml.
+	Short: "Builds rig.yaml to stdout",
+	Long: `Builds rig.yaml to stdout. Template values are defined in rig.yaml but
+can also be defined in command line arguments. Values defined in arguments
+supersede values in rig.yaml.
 
 Examples:
 rig build
