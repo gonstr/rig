@@ -307,6 +307,7 @@ func (t template) Install(force bool) error {
 
 var emptyLines = regexp.MustCompile(`(?m)^\s*$[\r\n]*|[\r\n]+\s+\z`)
 var containsNonWhitespace = regexp.MustCompile(`\S+`)
+var onlyASCII = regexp.MustCompile("[[:^ascii:]]")
 
 func (t template) Build(filePath string, values []string, stringValues []string) (string, error) {
 	file, err := readYaml(filePath)
@@ -388,7 +389,9 @@ func (t template) Build(filePath string, values []string, stringValues []string)
 			return "", err
 		}
 
-		tmpl, err := gotmpl.New("build").Option("missingkey=error").Funcs(FuncMap()).Parse(string(content))
+		sanitized := onlyASCII.ReplaceAllLiteralString(string(content), "")
+
+		tmpl, err := gotmpl.New("build").Option("missingkey=error").Funcs(FuncMap()).Parse(sanitized)
 		if err != nil {
 			return "", err
 		}
@@ -408,7 +411,7 @@ func (t template) Build(filePath string, values []string, stringValues []string)
 
 	joined := strings.Join(strs, "\n---\n")
 
-	return emptyLines.ReplaceAllString(joined, ""), nil
+	return emptyLines.ReplaceAllLiteralString(joined, ""), nil
 }
 
 func mergeValues(filePath string, values []string, stringValues []string) (map[string]interface{}, error) {
