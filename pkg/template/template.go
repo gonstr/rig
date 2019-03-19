@@ -134,14 +134,27 @@ func FuncMap() gotmpl.FuncMap {
 }
 
 func readYaml(path string) (map[string]interface{}, error) {
-	bytes, err := ioutil.ReadFile(path)
+	bts, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	sanitized := onlyASCII.ReplaceAllLiteralString(string(bts), "")
+
+	tmpl, err := gotmpl.New("readrig").Funcs(FuncMap()).Parse(sanitized)
+	if err != nil {
+		return nil, err
+	}
+
+	var buffer bytes.Buffer
+	err = tmpl.Execute(&buffer, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	m := make(map[string]interface{})
 
-	err = yaml.Unmarshal(bytes, &m)
+	err = yaml.Unmarshal(buffer.Bytes(), &m)
 	if err != nil {
 		return nil, err
 	}
@@ -274,7 +287,7 @@ func (t template) Install(force bool) error {
 
 	digest, err := fs.DirectoryDigest(path.Join(tmpDir, t.path, "templates"))
 
-	tmpl, err := gotmpl.New("rig").Funcs(FuncMap()).Parse(rigTmpl)
+	tmpl, err := gotmpl.New("writerig").Funcs(FuncMap()).Parse(rigTmpl)
 	if err != nil {
 		return err
 	}
