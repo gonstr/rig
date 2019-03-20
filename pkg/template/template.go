@@ -208,6 +208,10 @@ func (t template) gitSCPURI() string {
 	return fmt.Sprintf("git@%s:%s/%s", t.host, t.owner, t.repo)
 }
 
+func (t template) gitURL() string {
+	return fmt.Sprintf("%s://%s/%s/%s", t.scheme, t.host, t.owner, t.repo)
+}
+
 func (t template) templateURL() string {
 	url := fmt.Sprintf("%s://%s/%s/%s", t.scheme, t.host, t.owner, t.repo)
 
@@ -240,7 +244,7 @@ func (t template) Sync() error {
 			return err
 		}
 
-		err = git.Clone(ownerDir, t.gitSCPURI())
+		err = git.Clone(ownerDir, t.gitURL())
 		if err != nil {
 			return err
 		}
