@@ -230,15 +230,20 @@ func (t template) Sync() error {
 	}
 
 	if fs.PathExists(repoDir) {
-		// Dir exists - we should clean
 		err := git.Clean(repoDir)
 		if err != nil {
 			return err
 		}
 	} else {
-		// Dir does not exists - we should clone
-		fs.EnsureDir(ownerDir)
-		git.Clone(ownerDir, t.gitSCPURI())
+		err := fs.EnsureDir(ownerDir)
+		if err != nil {
+			return err
+		}
+
+		err = git.Clone(ownerDir, t.gitSCPURI())
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
