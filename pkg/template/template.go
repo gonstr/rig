@@ -391,7 +391,7 @@ func (t template) Build(filePath string, values []string, stringValues []string)
 				return "", err
 			}
 			if digest != newdigest {
-				return "", fmt.Errorf("Template digest missmatch: %s does not equal %s", digest, newdigest)
+				return "", fmt.Errorf("Template digest does not match: %s", newdigest)
 			}
 		}
 
