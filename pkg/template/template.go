@@ -445,7 +445,7 @@ func mergeValues(filePath string, values []string, stringValues []string) (map[s
 
 	vals, ok := file["values"].(map[string]interface{})
 	if !ok {
-		return nil, fmt.Errorf("Failed to parse values: %s", filePath)
+		vals = make(map[string]interface{})
 	}
 
 	// User specified a value via --value
