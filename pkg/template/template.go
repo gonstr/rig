@@ -431,9 +431,10 @@ func (t template) Build(filePath string, values []string, stringValues []string)
 		}
 	}
 
-	joined := strings.Join(strs, "\n---\n")
+	str := strings.Join(strs, "\n---\n")
+	str = strings.Replace(str, "<no value>", "", -1)
 
-	return emptyLines.ReplaceAllLiteralString(joined, ""), nil
+	return emptyLines.ReplaceAllLiteralString(str, ""), nil
 }
 
 func mergeValues(filePath string, values []string, stringValues []string) (map[string]interface{}, error) {
