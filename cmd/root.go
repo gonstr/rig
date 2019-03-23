@@ -16,6 +16,7 @@ Complete documentation is available at https://github.com/gonstr/rig.
 `,
 }
 
+// Execute executes :)
 func Execute() {
 	err := rootCmd.Execute()
 	check(err)
