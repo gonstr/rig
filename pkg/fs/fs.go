@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/ghodss/yaml"
+	"github.com/gonstr/rig/pkg/engine"
 	"github.com/mitchellh/go-homedir"
 )
 
@@ -65,4 +67,23 @@ func DirectoryDigest(path string) (string, error) {
 	}
 
 	return fmt.Sprintf("sha256:%x", hash.Sum(nil)), nil
+}
+
+// ReadYaml reads a path and tries to unmarshal it to yaml
+func ReadYaml(path string) (map[string]interface{}, error) {
+	bytes, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	bytes, err = engine.Render(string(bytes), nil)
+
+	m := make(map[string]interface{})
+
+	err = yaml.Unmarshal(bytes, &m)
+	if err != nil {
+		return nil, err
+	}
+
+	return m, nil
 }

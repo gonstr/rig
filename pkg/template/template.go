@@ -1,7 +1,6 @@
 package template
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -11,14 +10,12 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	gotmpl "text/template"
 
-	"github.com/Masterminds/sprig"
 	"github.com/ghodss/yaml"
+	"github.com/gonstr/rig/pkg/engine"
 	"github.com/gonstr/rig/pkg/fs"
 	"github.com/gonstr/rig/pkg/git"
 
-	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/strvals"
 )
 
@@ -113,48 +110,20 @@ func NewFromFile(filePath string) (Template, error) {
 	return NewFromURL(fmt.Sprintf("%s#%s", templateURL, templateVersion))
 }
 
-// FuncMap returns funcmap for use in go templating
-func FuncMap() gotmpl.FuncMap {
-	f := sprig.TxtFuncMap()
-
-	// Add some extra functionality
-	extra := gotmpl.FuncMap{
-		"toToml":   chartutil.ToToml,
-		"toYaml":   chartutil.ToYaml,
-		"fromYaml": chartutil.FromYaml,
-		"toJson":   chartutil.ToJson,
-		"fromJson": chartutil.FromJson,
-	}
-
-	for k, v := range extra {
-		f[k] = v
-	}
-
-	return f
-}
-
 func readYaml(path string) (map[string]interface{}, error) {
-	bts, err := ioutil.ReadFile(path)
+	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	sanitized := onlyASCII.ReplaceAllLiteralString(string(bts), "")
-
-	tmpl, err := gotmpl.New("readrig").Funcs(FuncMap()).Parse(sanitized)
-	if err != nil {
-		return nil, err
-	}
-
-	var buffer bytes.Buffer
-	err = tmpl.Execute(&buffer, nil)
+	bytes, err = engine.Render(string(bytes), nil)
 	if err != nil {
 		return nil, err
 	}
 
 	m := make(map[string]interface{})
 
-	err = yaml.Unmarshal(buffer.Bytes(), &m)
+	err = yaml.Unmarshal(bytes, &m)
 	if err != nil {
 		return nil, err
 	}
@@ -296,11 +265,6 @@ func (t template) Install(force bool) error {
 
 	digest, err := fs.DirectoryDigest(path.Join(tmpDir, t.path, "templates"))
 
-	tmpl, err := gotmpl.New("writerig").Funcs(FuncMap()).Parse(rigTmpl)
-	if err != nil {
-		return err
-	}
-
 	tmplData := struct {
 		URL    string
 		Gitref string
@@ -313,13 +277,12 @@ func (t template) Install(force bool) error {
 		Values: string(values),
 	}
 
-	var buffer bytes.Buffer
-	err = tmpl.Execute(&buffer, tmplData)
+	bytes, err := engine.Render(rigTmpl, tmplData)
 	if err != nil {
 		return err
 	}
 
-	err = ioutil.WriteFile(path.Join(wd, "rig.yaml"), buffer.Bytes(), 0644)
+	err = ioutil.WriteFile(path.Join(wd, "rig.yaml"), bytes, 0644)
 	if err != nil {
 		return err
 	}
@@ -411,20 +374,12 @@ func (t template) Build(filePath string, values []string, stringValues []string)
 			return "", err
 		}
 
-		sanitized := onlyASCII.ReplaceAllLiteralString(string(content), "")
-
-		tmpl, err := gotmpl.New("build").Option("missingkey=error").Funcs(FuncMap()).Parse(sanitized)
+		bytes, err := engine.Render(string(content), vals)
 		if err != nil {
 			return "", err
 		}
 
-		var buffer bytes.Buffer
-		err = tmpl.Execute(&buffer, vals)
-		if err != nil {
-			return "", err
-		}
-
-		str := buffer.String()
+		str := string(bytes)
 
 		if containsNonWhitespace.MatchString(str) {
 			strs = append(strs, str)
