@@ -77,6 +77,9 @@ func ReadYaml(path string) (map[string]interface{}, error) {
 	}
 
 	bytes, err = engine.Render(string(bytes), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	m := make(map[string]interface{})
 

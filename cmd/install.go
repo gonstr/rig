@@ -38,7 +38,7 @@ rig install https://github.com/gonstr/rig-templates/simple-app#simple-app/v1.0.0
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		tmpl, err := template.NewFromURL(args[0])
+		tmpl, err := template.NewFromURL(args[0], "", nil)
 		check(err)
 
 		err = tmpl.Sync()

@@ -8,7 +8,7 @@
 
 ## Example usage with templates stored remotely
 
-"Install" the remote template:
+Install the remote template:
 
 ```shell
 rig install https://github.com/foo/bar/simple-app#simple-app/v1.0.0
@@ -22,8 +22,7 @@ Edit `rig.yaml` to your liking and build the template to stdout:
 rig build
 ```
 
-To apply or overwrite template values when building and applying the manifests
-to kubernetes use `--value` and pipe the output to `kubectl`:
+To apply or overwrite template values when building use `--value`:
 
 ```shell
 rig build --value deployment.tag=$(git rev-parse HEAD) | kubectl apply -f -
@@ -51,6 +50,15 @@ values:
 " > rig.yaml
 
 TARGET_PORT=8080 rig build --string-value host_port=80
+```
+
+## Using the templating engine without rig.yaml
+
+When template files are stored locally rig can be used without rig.yaml if
+template path is supplied with `--path`:
+
+```
+rig build --path manifests/prod --value ingress.host=my-app.prod.com
 ```
 
 ## Installing
