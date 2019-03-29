@@ -54,8 +54,7 @@ TARGET_PORT=8080 rig build --string-value host_port=80
 
 ## Using the templating engine without rig.yaml
 
-When template files are stored locally rig can be used without rig.yaml if
-template path is supplied with `--path`:
+Rig can be used without rig.yaml if manifest path is set with `--path`:
 
 ```
 rig build --path manifests/prod --value ingress.host=my-app.prod.com
