@@ -62,8 +62,6 @@ rig build --path manifests/prod --value ingress.host=my-app.prod.com
 
 ## Installing
 
-`rig` requires `git` so make sure that it's isntalled.
-
 Install using the install script:
 
 ```shell
