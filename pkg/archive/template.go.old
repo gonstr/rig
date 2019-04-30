@@ -45,7 +45,7 @@ type template struct {
 	values map[string]interface{}
 }
 
-// NewFromURL creates a template from a uri
+// NewFromURL creates a template from a url
 func NewFromURL(templateURL string, digest string, values map[string]interface{}) (Template, error) {
 	u, err := url.Parse(templateURL)
 	if err != nil {

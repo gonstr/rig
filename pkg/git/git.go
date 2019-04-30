@@ -4,11 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+
+	"github.com/gonstr/rig/pkg/fs"
 )
 
-// Clone clones an uri in to dir
-func Clone(dir string, uri string) error {
-	cmd := exec.Command("git", "clone", uri)
+// Clone clones an url in to dir
+func Clone(dir string, url string) error {
+	cmd := exec.Command("git", "clone", url)
 	cmd.Dir = dir
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -63,5 +65,27 @@ func Checkout(repoDir string, targetDir string, ref string, path string) error {
 	if err != nil {
 		return errors.New(string(out))
 	}
+	return nil
+}
+
+// Sync either clones or cleans a dir depending on if it exists or not
+func Sync(ownerDir string, repoDir string, gitURL string) error {
+	if fs.PathExists(repoDir) {
+		err := Clean(repoDir)
+		if err != nil {
+			return err
+		}
+	} else {
+		err := fs.EnsureDir(ownerDir)
+		if err != nil {
+			return err
+		}
+
+		err = Clone(ownerDir, gitURL)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }

@@ -1,21 +1,22 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 
-	"github.com/spf13/cobra"
+	"github.com/gonstr/rig/pkg/fs"
 
-	"github.com/gonstr/rig/pkg/template"
+	"github.com/gonstr/rig/pkg/build"
+	"github.com/spf13/cobra"
 )
 
-var templatePath string
 var values []string
 var stringValues []string
 
 func init() {
-	buildCmd.Flags().StringVar(&templatePath, "path", "", "set the template path (this must be a local file path)")
 	buildCmd.Flags().StringArrayVar(&values, "value", []string{}, "set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
 	buildCmd.Flags().StringArrayVar(&stringValues, "string-value", []string{}, "set STRING values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
 
@@ -23,36 +24,67 @@ func init() {
 }
 
 var buildCmd = &cobra.Command{
-	Use:   "build",
-	Short: "Builds rig.yaml to stdout",
-	Long: `Builds rig.yaml to stdout. Template path and values are defined in
-rig.yaml but can also be defined as command line arguments. Values defined in
-arguments supersede values in rig.yaml.
+	Use:   "build [path]",
+	Short: "Builds a template to stdout",
+	Args:  cobra.MaximumNArgs(1),
+	Long: `Builds a template to stdout.
 
-If path is specified as a command line argument there is no need for a rig.yaml
-file.
+To build a rig template, rig needs to know where to look for the template files
+and what template values to use. There are a few ways to supply this data:
 
-Examples:
+- Template path and values can be defined in rig.yaml as well as in cmd line
+  arguments
+- Template data can be passed to stdin
+
+Path and values supplied through command line arguments supercede those defined
+in rig.yaml.
+
+Example usage:
+
 rig build
 rig build --value deployment.tag=$(git rev-parse HEAD)
-rig build --path manifests --value host=my-app.${CLUSTER}.example.com
+rig build my/manifests/folder --value host=my-app.${CLUSTER}.example.com
+cat manifest.yaml | rig build --string-value port=8080
 
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		wd, err := os.Getwd()
+		fi, err := os.Stdin.Stat()
 		check(err)
 
-		filePath := path.Join(wd, "rig.yaml")
+		if (fi.Mode() & os.ModeCharDevice) == 0 {
+			// Data from stdin
+			if len(args) > 0 {
+				check(errors.New("invalid command: template data passed to stdin AND template path defined as argument"))
+			}
 
-		tmpl, err := template.New(filePath, templatePath)
-		check(err)
+			bytes, err := ioutil.ReadAll(os.Stdin)
+			check(err)
 
-		err = tmpl.Sync()
-		check(err)
+			output, err := build.FromString(string(bytes), nil, values, stringValues)
+			check(err)
 
-		yaml, err := tmpl.Build(values, stringValues)
-		check(err)
+			fmt.Println(output)
+		} else {
+			if len(args) > 0 {
+				output, err := build.FromTemplatesPath(args[0], values, stringValues)
+				check(err)
 
-		fmt.Print(yaml)
+				fmt.Println(output)
+			} else {
+				wd, err := os.Getwd()
+				check(err)
+
+				rigPath := path.Join(wd, "rig.yaml")
+
+				if !fs.PathExists(rigPath) {
+					check(errors.New("invalid command: either pass a template to stdin, supply a template path argument or run the command in a dir with a rig.yaml file"))
+				}
+
+				output, err := build.FromRigFile(rigPath, values, stringValues)
+				check(err)
+
+				fmt.Println(output)
+			}
+		}
 	},
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"text/template"
 
 	"github.com/Masterminds/sprig"
@@ -47,13 +48,18 @@ func FuncMap() template.FuncMap {
 	return f
 }
 
+var emptyLines = regexp.MustCompile(`(?m)^\s*$[\r\n]*|[\r\n]+\s+\z`)
+var onlyASCII = regexp.MustCompile("[[:^ascii:]]")
+
 // Render a tmp string with templates values
 func Render(str string, vals interface{}) ([]byte, error) {
 	// Go templates fails to render funny unicode characters to we replace any non
-	// ascii characters with an empty string
-	str = regexp.MustCompile("[[:^ascii:]]").ReplaceAllLiteralString(str, "")
+	// ascii characters with an empty string for now.
+	// TODO: Improve this, we probably only want to replace problematic unicode
+	// characters instead of all non ascii.
+	preProcessedStr := onlyASCII.ReplaceAllLiteralString(str, "")
 
-	tmpl, err := template.New("tmpl").Option("missingkey=error").Funcs(FuncMap()).Parse(str)
+	tmpl, err := template.New("tmpl").Option("missingkey=error").Funcs(FuncMap()).Parse(preProcessedStr)
 	if err != nil {
 		return nil, err
 	}
@@ -64,5 +70,14 @@ func Render(str string, vals interface{}) ([]byte, error) {
 		return nil, err
 	}
 
-	return buffer.Bytes(), nil
+	// Remove empty lines from output
+	postProcessedStr, err := emptyLines.ReplaceAllLiteralString(buffer.String(), ""), nil
+	if err != nil {
+		return nil, err
+	}
+
+	// Remove <no value>
+	postProcessedStr = strings.Replace(postProcessedStr, "<no value>", "", -1)
+
+	return []byte(postProcessedStr), nil
 }

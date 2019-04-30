@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 
 	"github.com/ghodss/yaml"
@@ -69,8 +70,8 @@ func DirectoryDigest(path string) (string, error) {
 	return fmt.Sprintf("sha256:%x", hash.Sum(nil)), nil
 }
 
-// ReadYaml reads a path and tries to unmarshal it to yaml
-func ReadYaml(path string) (map[string]interface{}, error) {
+// UnmarshalYaml reads a path and tries to unmarshal it to yaml
+func UnmarshalYaml(path string) (map[string]interface{}, error) {
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -89,4 +90,25 @@ func ReadYaml(path string) (map[string]interface{}, error) {
 	}
 
 	return m, nil
+}
+
+// ReadFiles reads all files in a directory and return them as a string array
+func ReadFiles(dir string) ([]string, error) {
+	filePaths, err := filepath.Glob(path.Join(dir, "*"))
+	if err != nil {
+		return nil, err
+	}
+
+	var contents []string
+
+	for i := 0; i < len(filePaths); i++ {
+		content, err := ioutil.ReadFile(filePaths[i])
+		if err != nil {
+			return nil, err
+		}
+
+		contents = append(contents, string(content))
+	}
+
+	return contents, nil
 }
