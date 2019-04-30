@@ -31,7 +31,7 @@ func FromString(str string, valueMap map[string]interface{}, values []string, st
 }
 
 // FromTemplatesPath builds a template from a path
-func FromTemplatesPath(templatesPath string, values []string, stringValues []string) (string, error) {
+func FromTemplatesPath(templatesPath string, valueMap map[string]interface{}, values []string, stringValues []string) (string, error) {
 	wd, err := os.Getwd()
 	if err != nil {
 		return "", err
@@ -44,7 +44,7 @@ func FromTemplatesPath(templatesPath string, values []string, stringValues []str
 
 	var rendered []string
 	for i := 0; i < len(files); i++ {
-		str, err := FromString(files[i], nil, values, stringValues)
+		str, err := FromString(files[i], valueMap, values, stringValues)
 		if err != nil {
 			return "", err
 		}
@@ -65,6 +65,10 @@ func FromRigFile(filePath string, values []string, stringValues []string) (strin
 	ctx, err := context.FromFile(filePath)
 	if err != nil {
 		return "", err
+	}
+
+	if ctx.Scheme() == "" {
+		return FromTemplatesPath(ctx.Path(), ctx.Values(), values, stringValues)
 	}
 
 	ownerDir, err := ctx.OwnerDir()

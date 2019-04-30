@@ -66,7 +66,7 @@ cat manifest.yaml | rig build --string-value port=8080
 			fmt.Println(output)
 		} else {
 			if len(args) > 0 {
-				output, err := build.FromTemplatesPath(args[0], values, stringValues)
+				output, err := build.FromTemplatesPath(args[0], nil, values, stringValues)
 				check(err)
 
 				fmt.Println(output)
