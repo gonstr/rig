@@ -93,10 +93,19 @@ func UnmarshalYaml(path string) (map[string]interface{}, error) {
 }
 
 // ReadFiles reads all files in a directory and return them as a string array
-func ReadFiles(dir string) ([]string, error) {
-	filePaths, err := filepath.Glob(path.Join(dir, "*"))
+func ReadFiles(dirOrFilePath string) ([]string, error) {
+	filePaths := []string{dirOrFilePath}
+
+	fi, err := os.Stat(dirOrFilePath)
 	if err != nil {
 		return nil, err
+	}
+
+	if fi.Mode().IsDir() {
+		filePaths, err = filepath.Glob(path.Join(dirOrFilePath, "*"))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var contents []string

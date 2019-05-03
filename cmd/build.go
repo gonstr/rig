@@ -13,10 +13,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var fromStdin bool
 var values []string
 var stringValues []string
 
 func init() {
+	buildCmd.Flags().BoolVar(&fromStdin, "from-stdin", false, "build template from stdin")
 	buildCmd.Flags().StringArrayVar(&values, "value", []string{}, "set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
 	buildCmd.Flags().StringArrayVar(&stringValues, "string-value", []string{}, "set STRING values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
 
@@ -25,38 +27,27 @@ func init() {
 
 var buildCmd = &cobra.Command{
 	Use:   "build [path]",
-	Short: "Builds a template to stdout",
+	Short: "Build a template to stdout",
 	Args:  cobra.MaximumNArgs(1),
-	Long: `Builds a template to stdout.
+	Long: `Build a template to stdout.
 
-To build a rig template, rig needs to know where to look for the template files
-and what template values to use. There are a few ways to supply this data:
+Template path can be supplied as the first argument. If no argument is supplied,
+a rig.yaml file is expected. The template can also be passed to stdin if the
+--from-stdin argument is supplied.
 
-- Template path and values can be defined in rig.yaml as well as in cmd line
-  arguments
-- Template data can be passed to stdin
-
-Path and values supplied through command line arguments supercede those defined
-in rig.yaml.
+Template values can be defined in rig.yaml or by --value or --string-value
+arguments. Values supplied in arguments supercede values in rig.yaml.
 
 Example usage:
 
 rig build
 rig build --value deployment.tag=$(git rev-parse HEAD)
 rig build my/manifests/folder --value host=my-app.${CLUSTER}.example.com
-cat manifest.yaml | rig build --string-value port=8080
+cat manifest.yaml | rig build --from-stdin --string-value port=8080
 
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fi, err := os.Stdin.Stat()
-		check(err)
-
-		if (fi.Mode() & os.ModeCharDevice) == 0 {
-			// Data from stdin
-			if len(args) > 0 {
-				check(errors.New("invalid command: template data passed to stdin AND template path defined as argument"))
-			}
-
+		if fromStdin {
 			bytes, err := ioutil.ReadAll(os.Stdin)
 			check(err)
 
@@ -77,7 +68,7 @@ cat manifest.yaml | rig build --string-value port=8080
 				rigPath := path.Join(wd, "rig.yaml")
 
 				if !fs.PathExists(rigPath) {
-					check(errors.New("invalid command: either pass a template to stdin, supply a template path argument or run the command in a dir with a rig.yaml file"))
+					check(errors.New("invalid command: either supply a template path argument or run the command in a dir with a rig.yaml file"))
 				}
 
 				output, err := build.FromRigFile(rigPath, values, stringValues)

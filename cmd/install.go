@@ -17,8 +17,8 @@ func init() {
 
 var installCmd = &cobra.Command{
 	Use:   "install",
-	Short: "Installs a remote rig template to the current directory",
-	Long: `Installs a rig template from a remote github repository to the current
+	Short: "Install a remote rig template to the current directory",
+	Long: `Install a rig template from a remote github repository to the current
 directory. Template data will be stored in rig.yaml. Git branch/tag or commit
 can be defined as a fragment in the template url.
 
