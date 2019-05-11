@@ -22,7 +22,7 @@ func Clone(dir string, url string) error {
 
 // Clean cleans a directory
 func Clean(dir string) error {
-	cmd := exec.Command("git", "fetch", "--tags")
+	cmd := exec.Command("git", "fetch", "--all")
 	cmd.Dir = dir
 	out, err := cmd.CombinedOutput()
 	if err != nil {
