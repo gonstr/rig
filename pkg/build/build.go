@@ -22,7 +22,7 @@ func FromString(str string, valueMap map[string]interface{}, values []string, st
 		return "", err
 	}
 
-	bytes, err := engine.Render(str, vals)
+	bytes, err := engine.Render(str, vals, true)
 	if err != nil {
 		return "", err
 	}

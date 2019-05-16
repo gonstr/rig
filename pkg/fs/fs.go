@@ -77,7 +77,7 @@ func UnmarshalYaml(path string) (map[string]interface{}, error) {
 		return nil, err
 	}
 
-	bytes, err = engine.Render(string(bytes), nil)
+	bytes, err = engine.Render(string(bytes), nil, false)
 	if err != nil {
 		return nil, err
 	}

@@ -93,7 +93,7 @@ func FromURL(url string, force bool) error {
 		Values: string(values),
 	}
 
-	bytes, err := engine.Render(rigTmpl, tmplData)
+	bytes, err := engine.Render(rigTmpl, tmplData, false)
 	if err != nil {
 		return err
 	}
